@@ -9,12 +9,8 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #ff9a9e, #fecfef); min-height: 100vh; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
         .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; text-align: center; }
-        .header-logo { max-width: 600px; max-height: 240px; width: auto; height: auto; margin-bottom: 15px; object-fit: contain; }
         .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
         .header p { font-size: 1.1rem; opacity: 0.9; }
-        .user-info { position: absolute; top: 15px; right: 15px; color: white; font-size: 0.9rem; }
-        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 5px 10px; border-radius: 15px; cursor: pointer; margin-left: 10px; }
-        .logout-btn:hover { background: rgba(255,255,255,0.3); }
         .tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
         .tab { flex: 1; padding: 15px; text-align: center; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; color: #6c757d; transition: all 0.3s ease; }
         .tab.active { color: #667eea; background: white; border-bottom: 3px solid #667eea; }
@@ -38,11 +34,9 @@
         .stage-header h3 { font-size: 1.3rem; }
         .stage-progress { font-size: 0.9rem; opacity: 0.9; }
         .stage-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 25px; background: #f8f9fa; }
-        .food-item { background: white; padding: 20px; border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; position: relative; }
+        .food-item { background: white; padding: 20px; border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; }
         .food-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .food-item.allergy-flagged { border-color: #dc3545; background: #fff5f5; }
         .food-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; color: #495057; }
-        .allergy-flag { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; }
         .food-controls { display: flex; flex-direction: column; gap: 10px; }
         .tried-container { display: flex; align-items: center; gap: 10px; }
         .tried-checkbox { width: 20px; height: 20px; cursor: pointer; }
@@ -54,8 +48,25 @@
         .star { font-size: 1.5rem; cursor: pointer; transition: all 0.3s ease; filter: grayscale(100%); }
         .star.filled { filter: none; }
         .star:hover { transform: scale(1.2); }
-        .allergy-btn { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; }
-        .allergy-btn:hover { background: #c82333; }
+        .reaction-btn { background: linear-gradient(135deg, #ffa726, #ffcc02); color: white; border: none; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.3s ease; margin-top: 10px; }
+        .reaction-btn:hover { background: linear-gradient(135deg, #ff9800, #ffc107); transform: translateY(-1px); }
+        .reaction-btn.has-reactions { background: linear-gradient(135deg, #ff7043, #f4511e); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 0; border-radius: 15px; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-header { background: linear-gradient(135deg, #ffa726, #ffcc02); color: white; padding: 20px; border-radius: 15px 15px 0 0; text-align: center; }
+        .modal-body { padding: 20px; }
+        .close { color: white; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { opacity: 0.7; }
+        .symptom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 15px 0; }
+        .symptom-btn { padding: 10px; border: 2px solid #e9ecef; background: white; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.9rem; transition: all 0.3s ease; }
+        .symptom-btn:hover { background: #f8f9fa; }
+        .symptom-btn.selected { background: #fff3e0; border-color: #ff9800; color: #f57c00; }
+        .reaction-history { margin-top: 20px; max-height: 200px; overflow-y: auto; }
+        .history-item { background: #fff3e0; border-left: 4px solid #ff9800; padding: 10px; margin-bottom: 8px; border-radius: 5px; font-size: 0.9rem; }
+        .history-date { font-weight: bold; color: #f57c00; }
+        .history-symptoms { color: #666; margin-top: 5px; }
+        .report-btn { background: linear-gradient(135deg, #ffa726, #ffcc02); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; margin: 10px 5px; }
+        .report-btn:hover { background: linear-gradient(135deg, #ff9800, #ffc107); }
         .notes-section { background: white; padding: 20px; margin-top: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .notes-section h3 { color: #495057; margin-bottom: 15px; }
         .notes-textarea { width: 100%; height: 100px; border: 2px solid #e9ecef; border-radius: 10px; padding: 15px; font-family: inherit; resize: vertical; }
@@ -74,109 +85,14 @@
         .add-meal-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
         .add-meal-btn:hover:not(:disabled) { background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
         .add-meal-btn:disabled { background: #6c757d; cursor: not-allowed; opacity: 0.6; }
-        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; z-index: 1000; }
-
-        /* Login Screen */
-        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #ff9a9e, #fecfef); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .login-container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 400px; width: 90%; }
-        .login-title { text-align: center; margin-bottom: 30px; color: #495057; }
-        .login-form { display: flex; flex-direction: column; gap: 15px; }
-        .login-input { padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; font-size: 1rem; }
-        .login-input:focus { outline: none; border-color: #667eea; }
-        .login-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
-        .login-btn:hover { background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%); }
-        .register-toggle { text-align: center; margin-top: 15px; color: #6c757d; cursor: pointer; }
-        .register-toggle:hover { color: #495057; }
-
-        /* Achievement Popup */
-        .achievement-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); z-index: 3000; text-align: center; max-width: 400px; width: 90%; }
-        .achievement-icon { font-size: 4rem; margin-bottom: 15px; }
-        .achievement-title { font-size: 1.5rem; font-weight: bold; color: #495057; margin-bottom: 10px; }
-        .achievement-desc { color: #6c757d; margin-bottom: 20px; }
-        .achievement-close { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; }
-
-        /* Allergy Modal */
-        .allergy-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000; }
-        .allergy-modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .allergy-symptoms { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 20px 0; }
-        .symptom-option { background: #f8f9fa; border: 2px solid #dee2e6; padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s ease; }
-        .symptom-option.selected { background: #fff5f5; border-color: #dc3545; color: #dc3545; }
-        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        .modal-btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; }
-        .modal-btn.save { background: #dc3545; color: white; }
-        .modal-btn.cancel { background: #6c757d; color: white; }
-
-        @media (max-width: 768px) { 
-            .header { padding: 20px 15px; text-align: center; }
-            .header h1 { font-size: 1.8rem; } 
-            .header-logo { width: calc(100% - 30px); max-width: calc(100vw - 70px); height: auto; max-height: 20vh; object-fit: contain; display: block; margin: 0 auto 15px auto; } 
-            .user-info { position: static; margin-bottom: 15px; }
-            .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } 
-            .stage-content { grid-template-columns: 1fr; } 
-            .controls { flex-direction: column; align-items: center; } 
-            .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } 
-            .stage-option { padding: 10px; font-size: 0.9rem; } 
-            .meal-input-section { flex-direction: column; align-items: stretch; } 
-            .add-meal-btn { width: 100%; margin-top: 10px; } 
-        }
+        @media (max-width: 768px) { .header h1 { font-size: 1.8rem; } .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .stage-content { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: center; } .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } .stage-option { padding: 10px; font-size: 0.9rem; } .meal-input-section { flex-direction: column; align-items: stretch; } .add-meal-btn { width: 100%; margin-top: 10px; } }
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="loginScreen" class="login-screen">
-        <div class="login-container">
-            <h2 class="login-title">🍼 Weaning Tracker</h2>
-            <div class="login-form">
-                <input type="text" id="loginUsername" class="login-input" placeholder="Username" maxlength="30">
-                <input type="password" id="loginPassword" class="login-input" placeholder="Password" maxlength="30">
-                <button id="loginBtn" class="login-btn">Login</button>
-                <div class="register-toggle" id="registerToggle">Don't have an account? Register here</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Achievement Popup -->
-    <div id="achievementPopup" class="achievement-popup" style="display: none;">
-        <div class="achievement-icon" id="achievementIcon">🏆</div>
-        <div class="achievement-title" id="achievementTitle">Achievement Unlocked!</div>
-        <div class="achievement-desc" id="achievementDesc">You've reached a milestone!</div>
-        <button class="achievement-close" onclick="closeAchievement()">Awesome!</button>
-    </div>
-
-    <!-- Allergy Modal -->
-    <div id="allergyModal" class="allergy-modal" style="display: none;">
-        <div class="allergy-modal-content">
-            <h3>⚠️ Report Allergic Reaction</h3>
-            <p>Food: <strong id="allergyFoodName"></strong></p>
-            <div class="allergy-symptoms">
-                <div class="symptom-option" data-symptom="rash">Skin rash/hives</div>
-                <div class="symptom-option" data-symptom="swelling">Swelling (face/lips)</div>
-                <div class="symptom-option" data-symptom="breathing">Breathing difficulty</div>
-                <div class="symptom-option" data-symptom="vomiting">Vomiting</div>
-                <div class="symptom-option" data-symptom="diarrhea">Diarrhea</div>
-                <div class="symptom-option" data-symptom="fussiness">Excessive fussiness</div>
-                <div class="symptom-option" data-symptom="other">Other symptoms</div>
-            </div>
-            <textarea id="allergyNotes" placeholder="Additional notes about the reaction..." rows="3" style="width: 100%; margin: 10px 0; padding: 10px; border: 2px solid #dee2e6; border-radius: 10px;"></textarea>
-            <div class="modal-buttons">
-                <button class="modal-btn cancel" onclick="closeAllergyModal()">Cancel</button>
-                <button class="modal-btn save" onclick="saveAllergyReport()">Report Reaction</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="loading" class="loading" style="display: none;">
-        <div>🔄 Syncing data...</div>
-    </div>
-
-    <div class="container" id="mainApp" style="display: none;">
+    <div class="container">
         <div class="header">
-            <div class="user-info">
-                👤 <span id="currentUser"></span>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
-            <img src="this.png" alt="Zachary's Weaning Tracker" class="header-logo">
-            <p>Track every taste, every try, every triumph! (Synced across all devices)</p>
+            <h1>🍼 Zachary's Weaning Journey</h1>
+            <p>Track every taste, every try, every triumph!</p>
         </div>
         <div class="tabs">
             <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
@@ -202,497 +118,164 @@
             <div id="stages" class="tab-content"><div id="stagesContainer"></div></div>
             <div id="addMeal" class="tab-content">
                 <div class="add-meal-section">
-                    <h3>Add Custom Meal</h3>
-                    <p style="text-align: center; margin-bottom: 25px; color: #6c757d;">Add a custom food for Zachary and choose which weaning stage it belongs to.</p>
-                    <div class="stage-selector">
-                        <div class="stage-option" data-stage="Week 1-2: First Tastes"><strong>Week 1-2</strong><br>First Tastes</div>
-                        <div class="stage-option" data-stage="Week 3-4: Building Confidence"><strong>Week 3-4</strong><br>Building Confidence</div>
-                        <div class="stage-option" data-stage="Week 5-6: Introducing Lumps"><strong>Week 5-6</strong><br>Introducing Lumps</div>
-                        <div class="stage-option" data-stage="Week 7-10: Variety & Textures"><strong>Week 7-10</strong><br>Variety & Textures</div>
-                        <div class="stage-option" data-stage="Week 11-16: Chopped & Chunkier"><strong>Week 11-16</strong><br>Chopped & Chunkier</div>
-                        <div class="stage-option" data-stage="Month 9-12: Joining Family Meals"><strong>Month 9-12</strong><br>Joining Family Meals</div>
-                    </div>
+                    <h3>🍽️ Add New Meal</h3>
+                    <div class="stage-selector" id="stageSelector"></div>
                     <div class="meal-input-section">
-                        <input type="text" id="mealName" class="meal-input" placeholder="Enter custom meal name (e.g., 'Homemade applesauce')" maxlength="50">
-                        <button id="addMealBtn" class="add-meal-btn" disabled>Add Meal</button>
+                        <input type="text" id="mealInput" class="meal-input" placeholder="Enter food name (e.g., carrots, apple puree)">
+                        <button class="add-meal-btn" id="addMealBtn" onclick="addNewMeal()">Add Meal</button>
                     </div>
+                    <p style="text-align: center; color: #666; font-size: 0.9rem; margin-top: 10px;">Select a stage above, then add foods specific to that weaning stage</p>
                 </div>
             </div>
         </div>
     </div>
-    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Synced to cloud!</div>
-    
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-        import { getDatabase, ref, onValue, set, push, get } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
+    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Progress Saved!</div>
 
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCFGP2fcznEA_ubCtcWpQT4Ny99R7U4vHY",
-            authDomain: "zachary-weaning.firebaseapp.com",
-            databaseURL: "https://zachary-weaning-default-rtdb.firebaseio.com",
-            projectId: "zachary-weaning",
-            storageBucket: "zachary-weaning.firebasestorage.app",
-            messagingSenderId: "135558156277",
-            appId: "1:135558156277:web:97055f024492f3a7879abc",
-            measurementId: "G-3WWJ4G6XEC"
-        };
+    <!-- Reaction Modal -->
+    <div id="reactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeReactionModal()">&times;</span>
+                <h2 id="modalFoodName">Food Reaction Report</h2>
+                <p>Track any reactions or symptoms</p>
+            </div>
+            <div class="modal-body">
+                <div class="symptom-grid">
+                    <div class="symptom-btn" data-symptom="rash">Skin Rash</div>
+                    <div class="symptom-btn" data-symptom="vomiting">Vomiting</div>
+                    <div class="symptom-btn" data-symptom="diarrhea">Diarrhea</div>
+                    <div class="symptom-btn" data-symptom="constipation">Constipation</div>
+                    <div class="symptom-btn" data-symptom="gassy">Gas/Bloating</div>
+                    <div class="symptom-btn" data-symptom="fussy">Fussiness</div>
+                    <div class="symptom-btn" data-symptom="runny_nose">Runny Nose</div>
+                    <div class="symptom-btn" data-symptom="cough">Coughing</div>
+                    <div class="symptom-btn" data-symptom="hives">Hives</div>
+                    <div class="symptom-btn" data-symptom="wheezing">Wheezing</div>
+                    <div class="symptom-btn" data-symptom="swelling">Swelling</div>
+                    <div class="symptom-btn" data-symptom="other">Other</div>
+                </div>
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="report-btn" onclick="reportReaction()">Report Selected Symptoms</button>
+                    <button class="report-btn" style="background: #6c757d;" onclick="closeReactionModal()">Cancel</button>
+                </div>
+                <div class="reaction-history" id="reactionHistory">
+                    <!-- Previous reactions will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        // Global variables
-        let currentUser = null;
-        let currentUserData = {};
-        let isRegistering = false;
-        let allergyModalData = {};
-        let achievementQueue = [];
-
-        // Weaning stages data (mutable for custom meals)
+    <script>
+        // Weaning stages data
         let weaningStages = {
-            "Week 1-2: First Tastes": ["Apple puree", "Banana", "Carrot puree", "Sweet potato", "Pear puree", "Broccoli puree", "Butternut squash", "Avocado", "Baby rice", "Parsnip puree"],
-            "Week 3-4: Building Confidence": ["Cauliflower puree", "Courgette puree", "Mango puree", "Peach puree", "Green beans puree", "Pumpkin puree", "Spinach puree", "Potato puree", "Papaya puree", "Beetroot puree"],
-            "Week 5-6: Introducing Lumps": ["Mashed banana", "Well-cooked pasta shapes", "Soft cooked apple pieces", "Mashed sweet potato with lumps", "Soft steamed broccoli florets", "Mashed avocado with texture", "Soft cooked carrot sticks", "Rice with soft vegetables", "Mashed potato with lumps", "Soft cooked pear pieces"],
-            "Week 7-10: Variety & Textures": ["Scrambled egg", "Soft cooked chicken strips", "Toast fingers", "Cheese cubes", "Soft cooked fish flakes", "Pasta with sauce", "Steamed vegetable sticks", "Soft fruits in pieces", "Rice cakes", "Yogurt", "Well-cooked lentils", "Soft cooked beef strips"],
-            "Week 11-16: Chopped & Chunkier": ["Chopped chicken", "Chopped vegetables", "Harder fruits", "Sandwich pieces", "Mini meatballs", "Chopped hard-boiled egg", "Pasta salad", "Roasted vegetables", "Grated cheese", "Chopped fish", "Bean salads", "Finger foods"],
-            "Month 9-12: Joining Family Meals": ["Family meal portions", "Whole fruits", "Raw vegetables", "Nuts (chopped/ground)", "Whole grains", "Spiced foods", "Mixed textures", "Self-feeding foods", "Cup drinking", "Family snacks", "Complex meals", "Adult portions (smaller)"]
+            "4-6 months": ["Baby rice cereal", "Sweet potato puree", "Carrot puree", "Apple puree", "Pear puree", "Banana mash", "Avocado"],
+            "6-8 months": ["Broccoli puree", "Pea puree", "Chicken puree", "Beef puree", "Butternut squash", "Yogurt", "Oatmeal"],
+            "8-10 months": ["Finger foods", "Soft pasta", "Cheese cubes", "Cucumber sticks", "Toast fingers", "Scrambled egg", "Fish flakes"],
+            "10+ months": ["Family meals", "Berries", "Nuts (ground)", "Whole grapes (halved)", "Meat pieces", "Raw vegetables", "Spices"]
         };
 
         // Data storage
-        let weaningData = {};
-        let allergyData = {};
-        let notes = '';
-        let selectedStage = null;
-        let achievements = {};
+        let weaningData = JSON.parse(localStorage.getItem('weaningData') || '{}');
+        let notes = localStorage.getItem('weaningNotes') || '';
+        let selectedStage = '';
 
-        // Achievement definitions
-        const achievementList = {
-            firstFood: { icon: '🍎', title: 'First Bite!', desc: 'Tried your very first food!', trigger: (data) => getTotalTried(data) === 1 },
-            fiveFoods: { icon: '🌈', title: 'Food Explorer!', desc: 'Tried 5 different foods!', trigger: (data) => getTotalTried(data) === 5 },
-            tenFoods: { icon: '🏆', title: 'Taste Adventurer!', desc: 'Tried 10 different foods!', trigger: (data) => getTotalTried(data) === 10 },
-            twentyFoods: { icon: '🎖️', title: 'Super Taster!', desc: 'Tried 20 different foods!', trigger: (data) => getTotalTried(data) === 20 },
-            firstLove: { icon: '❤️', title: 'Found a Favorite!', desc: 'Gave your first 5-star rating!', trigger: (data) => getFiveStarCount(data) === 1 },
-            fiveLoves: { icon: '💝', title: 'Food Lover!', desc: 'Found 5 favorite foods!', trigger: (data) => getFiveStarCount(data) === 5 },
-            persistent: { icon: '💪', title: 'Never Give Up!', desc: 'Tried the same food 5 times!', trigger: (data) => hasRepeatedFood(data, 5) },
-            champion: { icon: '🥇', title: 'Weaning Champion!', desc: 'Tried 50 different foods!', trigger: (data) => getTotalTried(data) === 50 }
-        };
-
-        // Initialize the app
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            setupLoginSystem();
+            renderStageSelector();
+            renderStages();
+            updateSummary();
+            loadNotes();
         });
 
-        // Login System
-        function setupLoginSystem() {
-            // Auto-login Zachary for existing data
-            const savedUser = localStorage.getItem('weaningUser');
-            if (savedUser === 'Zachary') {
-                currentUser = 'Zachary';
-                document.getElementById('currentUser').textContent = currentUser;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                loadFromFirebase();
-                setupAddMealTab();
-                setupRealtimeListeners();
-            }
-
-            document.getElementById('loginBtn').addEventListener('click', handleLogin);
-            document.getElementById('registerToggle').addEventListener('click', toggleRegister);
-        }
-
-        function toggleRegister() {
-            isRegistering = !isRegistering;
-            const btn = document.getElementById('loginBtn');
-            const toggle = document.getElementById('registerToggle');
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            if (isRegistering) {
-                btn.textContent = 'Register';
-                toggle.textContent = 'Already have an account? Login here';
-            } else {
-                btn.textContent = 'Login';
-                toggle.textContent = "Don't have an account? Register here";
-            }
-        }
-
-        async function handleLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-
-            if (!username || !password) {
-                alert('Please enter both username and password');
-                return;
-            }
-
-            showLoading(true);
-
-            try {
-                const userRef = ref(database, `users/${username}`);
-                const userSnapshot = await get(userRef);
-
-                if (isRegistering) {
-                    if (userSnapshot.exists()) {
-                        alert('Username already exists! Please choose a different one.');
-                        showLoading(false);
-                        return;
-                    }
-                    
-                    // Create new user
-                    await set(userRef, {
-                        password: password,
-                        createdAt: new Date().toISOString(),
-                        weaningData: {},
-                        allergyData: {},
-                        notes: '',
-                        achievements: {}
-                    });
-                    
-                    currentUser = username;
-                    showAutoSave(`✅ Account created for ${username}!`);
-                } else {
-                    if (!userSnapshot.exists()) {
-                        alert('User not found! Please register first.');
-                        showLoading(false);
-                        return;
-                    }
-
-                    const userData = userSnapshot.val();
-                    if (userData.password !== password) {
-                        alert('Incorrect password!');
-                        showLoading(false);
-                        return;
-                    }
-
-                    currentUser = username;
-                }
-
-                // Save login state and switch to main app
-                localStorage.setItem('weaningUser', currentUser);
-                document.getElementById('currentUser').textContent = currentUser;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                
-                loadFromFirebase();
-                setupAddMealTab();
-                setupRealtimeListeners();
-                showLoading(false);
-
-            } catch (error) {
-                console.error('Login error:', error);
-                alert('Login failed. Please try again.');
-                showLoading(false);
-            }
-        }
-
-        window.logout = function() {
-            currentUser = null;
-            localStorage.removeItem('weaningUser');
-            document.getElementById('loginScreen').style.display = 'block';
-            document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
-            weaningData = {};
-            allergyData = {};
-            notes = '';
-            achievements = {};
-        }
-
-        // Load data from Firebase
-        async function loadFromFirebase() {
-            if (!currentUser) return;
-            
-            showLoading(true);
-            try {
-                const userRef = ref(database, `users/${currentUser}`);
-                const userSnapshot = await get(userRef);
-                
-                if (userSnapshot.exists()) {
-                    currentUserData = userSnapshot.val();
-                    weaningData = currentUserData.weaningData || {};
-                    allergyData = currentUserData.allergyData || {};
-                    notes = currentUserData.notes || '';
-                    achievements = currentUserData.achievements || {};
-                    
-                    if (currentUserData.customStages) {
-                        weaningStages = { ...weaningStages, ...currentUserData.customStages };
-                    }
-
-                    document.getElementById('notesArea').value = notes;
-                }
-
-                renderStages();
-                updateSummary();
-                setupNotesListener();
-                showLoading(false);
-            } catch (error) {
-                console.error('Error loading from Firebase:', error);
-                showLoading(false);
-                showAutoSave('❌ Connection error - using local data');
-            }
-        }
-
-        // Setup realtime listeners for changes
-        function setupRealtimeListeners() {
-            if (!currentUser) return;
-
-            const userRef = ref(database, `users/${currentUser}`);
-            onValue(userRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    weaningData = userData.weaningData || {};
-                    allergyData = userData.allergyData || {};
-                    
-                    if (userData.notes !== notes) {
-                        notes = userData.notes || '';
-                        document.getElementById('notesArea').value = notes;
-                    }
-                    
-                    if (userData.customStages) {
-                        weaningStages = { ...weaningStages, ...userData.customStages };
-                        renderStages();
-                    }
-                    
-                    achievements = userData.achievements || {};
-                    updateSummary();
-                    updateAllFoodDisplays();
-                }
-            });
-        }
-
-        // Save data to Firebase
-        async function saveToFirebase(dataType, data) {
-            if (!currentUser) return;
-
-            try {
-                const userRef = ref(database, `users/${currentUser}/${dataType}`);
-                await set(userRef, data);
-                
-                if (dataType === 'weaningData') {
-                    checkAchievements();
-                }
-                
-                showAutoSave('✅ Synced to cloud!');
-            } catch (error) {
-                console.error('Error saving to Firebase:', error);
-                showAutoSave('❌ Sync failed');
-            }
-        }
-
-        // Achievement System
-        function checkAchievements() {
-            Object.entries(achievementList).forEach(([key, achievement]) => {
-                if (!achievements[key] && achievement.trigger(weaningData)) {
-                    achievements[key] = {
-                        unlocked: true,
-                        date: new Date().toISOString()
-                    };
-                    
-                    showAchievement(achievement);
-                    saveToFirebase('achievements', achievements);
-                }
-            });
-        }
-
-        function showAchievement(achievement) {
-            document.getElementById('achievementIcon').textContent = achievement.icon;
-            document.getElementById('achievementTitle').textContent = achievement.title;
-            document.getElementById('achievementDesc').textContent = achievement.desc;
-            document.getElementById('achievementPopup').style.display = 'block';
-        }
-
-        window.closeAchievement = function() {
-            document.getElementById('achievementPopup').style.display = 'none';
-        }
-
-        // Helper functions for achievements
-        function getTotalTried(data) {
-            return Object.values(data).filter(item => item.tried).length;
-        }
-
-        function getFiveStarCount(data) {
-            return Object.values(data).filter(item => item.rating === 5).length;
-        }
-
-        function hasRepeatedFood(data, count) {
-            return Object.values(data).some(item => item.attempts >= count);
-        }
-
-        // Allergy System
-        window.openAllergyModal = function(stageName, foodName) {
-            allergyModalData = { stage: stageName, food: foodName };
-            document.getElementById('allergyFoodName').textContent = foodName;
-            document.getElementById('allergyModal').style.display = 'block';
-        }
-
-        window.closeAllergyModal = function() {
-            document.getElementById('allergyModal').style.display = 'none';
-            // Clear selections
-            document.querySelectorAll('.symptom-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-            document.getElementById('allergyNotes').value = '';
-        }
-
-        // Symptom selection
-        document.addEventListener('click', function(e) {
-            if (e.target.matches('.symptom-option')) {
-                e.target.classList.toggle('selected');
-            }
-        });
-
-        window.saveAllergyReport = function() {
-            const selectedSymptoms = Array.from(document.querySelectorAll('.symptom-option.selected'))
-                .map(opt => opt.dataset.symptom);
-            const notes = document.getElementById('allergyNotes').value;
-            
-            if (selectedSymptoms.length === 0) {
-                alert('Please select at least one symptom');
-                return;
-            }
-
-            const allergyKey = `${allergyModalData.stage}-${allergyModalData.food}`;
-            allergyData[allergyKey] = {
-                symptoms: selectedSymptoms,
-                notes: notes,
-                date: new Date().toISOString()
-            };
-
-            // Mark food item visually
-            const foodId = `${allergyModalData.stage}-${allergyModalData.food}`.replace(/[^a-zA-Z0-9]/g, '');
-            const foodElement = document.getElementById(`food-${foodId}`);
-            if (foodElement) {
-                foodElement.classList.add('allergy-flagged');
-            }
-
-            saveToFirebase('allergyData', allergyData);
-            closeAllergyModal();
-            showAutoSave('⚠️ Allergy reaction reported!');
-        }
-
-        // Tab switching functionality
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
-            
-            if (tabName === 'stages') {
-                renderStages();
-            }
+            document.getElementById(tabName).classList.add('active');
         }
 
-        // Setup add meal tab functionality
-        function setupAddMealTab() {
-            const stageOptions = document.querySelectorAll('.stage-option');
-            const mealInput = document.getElementById('mealName');
-            const addBtn = document.getElementById('addMealBtn');
-
-            stageOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    stageOptions.forEach(opt => opt.classList.remove('selected'));
-                    this.classList.add('selected');
-                    selectedStage = this.getAttribute('data-stage');
-                    updateAddButton();
-                });
-            });
-
-            mealInput.addEventListener('input', updateAddButton);
-            addBtn.addEventListener('click', addCustomMeal);
+        // Stage selector for add meal
+        function renderStageSelector() {
+            const container = document.getElementById('stageSelector');
+            container.innerHTML = Object.keys(weaningStages).map(stage => 
+                `<div class="stage-option" data-stage="${stage}" onclick="selectStage('${stage}')">${stage}</div>`
+            ).join('');
         }
 
-        function updateAddButton() {
-            const mealInput = document.getElementById('mealName');
-            const addBtn = document.getElementById('addMealBtn');
-            const isValid = selectedStage && mealInput.value.trim().length > 0;
-            addBtn.disabled = !isValid;
+        function selectStage(stage) {
+            selectedStage = stage;
+            document.querySelectorAll('.stage-option').forEach(option => option.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('addMealBtn').disabled = false;
         }
 
-        async function addCustomMeal() {
-            const mealInput = document.getElementById('mealName');
+        // Add new meal
+        function addNewMeal() {
+            const mealInput = document.getElementById('mealInput');
             const mealName = mealInput.value.trim();
             
-            if (selectedStage && mealName) {
+            if (!selectedStage) {
+                alert('Please select a stage first');
+                return;
+            }
+            
+            if (!mealName) {
+                alert('Please enter a meal name');
+                return;
+            }
+            
+            if (!weaningStages[selectedStage]) {
+                weaningStages[selectedStage] = [];
+            }
+            
+            if (!weaningStages[selectedStage].includes(mealName)) {
                 weaningStages[selectedStage].push(mealName);
-                
-                const customStages = {};
-                Object.keys(weaningStages).forEach(stage => {
-                    if (weaningStages[stage].includes(mealName)) {
-                        customStages[stage] = weaningStages[stage];
-                    }
-                });
-                
-                await saveToFirebase('customStages', customStages);
-                
                 mealInput.value = '';
-                document.querySelectorAll('.stage-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                selectedStage = null;
-                updateAddButton();
-                
-                showAutoSave(`Added "${mealName}" to ${selectedStage}`);
-                
-                if (document.getElementById('stages').classList.contains('active')) {
-                    renderStages();
-                }
+                renderStages();
+                showAutoSave(`✅ ${mealName} added to ${selectedStage}!`);
+            } else {
+                alert('This meal already exists in the selected stage');
             }
         }
 
-        // Render all stages
+        // Render stages
         function renderStages() {
             const container = document.getElementById('stagesContainer');
-            container.innerHTML = '';
-
-            Object.entries(weaningStages).forEach(([stageName, foods]) => {
-                const stageDiv = document.createElement('div');
-                stageDiv.className = 'stage';
+            container.innerHTML = Object.entries(weaningStages).map(([stageName, foods]) => {
+                const stageData = weaningData[stageName] || {};
+                const triedCount = foods.filter(food => stageData[food] && stageData[food].tried).length;
                 
-                const triedCount = foods.filter(food => getFoodData(stageName, food).tried).length;
-                const progressText = `${triedCount}/${foods.length} tried`;
-
-                stageDiv.innerHTML = `
-                    <div class="stage-header" onclick="toggleStage('${stageName}')">
-                        <h3>${stageName}</h3>
-                        <div class="stage-progress">${progressText}</div>
-                    </div>
-                    <div class="stage-content" id="stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}">
-                        ${foods.map(food => createFoodItemHTML(stageName, food)).join('')}
+                return `
+                    <div class="stage">
+                        <div class="stage-header" onclick="toggleStage('${stageName}')">
+                            <h3>${stageName}</h3>
+                            <div class="stage-progress">${triedCount}/${foods.length} foods tried</div>
+                        </div>
+                        <div class="stage-content" id="stage-${stageName}">
+                            ${foods.map(food => renderFoodItem(stageName, food)).join('')}
+                        </div>
                     </div>
                 `;
-
-                container.appendChild(stageDiv);
-            });
+            }).join('');
         }
 
-        // Toggle stage visibility
-        window.toggleStage = function(stageName) {
-            const stageContent = document.getElementById(`stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}`);
-            stageContent.style.display = stageContent.style.display === 'none' ? 'grid' : 'none';
+        function toggleStage(stageName) {
+            const content = document.getElementById(`stage-${stageName}`);
+            content.style.display = content.style.display === 'none' ? 'grid' : 'none';
         }
 
-        // Create food item HTML
-        function createFoodItemHTML(stageName, foodName) {
-            const foodData = getFoodData(stageName, foodName);
-            const allergyKey = `${stageName}-${foodName}`;
-            const hasAllergy = allergyData[allergyKey];
-            const foodId = `${stageName}-${foodName}`.replace(/[^a-zA-Z0-9]/g, '');
-
+        function renderFoodItem(stageName, foodName) {
+            const foodData = weaningData[stageName] && weaningData[stageName][foodName] || {};
+            
             return `
-                <div class="food-item ${hasAllergy ? 'allergy-flagged' : ''}" id="food-${foodId}">
+                <div class="food-item">
                     <div class="food-name">${foodName}</div>
-                    ${hasAllergy ? '<div class="allergy-flag" title="Allergic reaction reported">⚠️</div>' : ''}
                     <div class="food-controls">
                         <div class="tried-container">
-                            <input type="checkbox" class="tried-checkbox" 
-                                   data-stage="${stageName}" data-food="${foodName}"
-                                   ${foodData.tried ? 'checked' : ''}>
+                            <input type="checkbox" class="tried-checkbox" ${foodData.tried ? 'checked' : ''} 
+                                   data-stage="${stageName}" data-food="${foodName}">
                             <label>Tried it</label>
                         </div>
                         <div class="counter-container">
@@ -707,8 +290,9 @@
                                        data-stage="${stageName}" data-food="${foodName}" data-rating="${rating}">⭐</span>`
                             ).join('')}
                         </div>
-                        <button class="allergy-btn" onclick="openAllergyModal('${stageName}', '${foodName}')">
-                            ⚠️ Report Reaction
+                        <button class="reaction-btn ${foodData.reactions && foodData.reactions.length > 0 ? 'has-reactions' : ''}" 
+                                onclick="showReactionModal('${stageName}', '${foodName}')">
+                            ${foodData.reactions && foodData.reactions.length > 0 ? `⚠️ View Reactions (${foodData.reactions.length})` : '⚠️ Report Reaction'}
                         </button>
                     </div>
                 </div>
@@ -721,87 +305,44 @@
                 const { stage, food } = e.target.dataset;
                 updateFoodData(stage, food, 'tried', e.target.checked);
                 updateSummary();
-                saveToFirebase('weaningData', weaningData);
+                saveData();
             }
             
             if (e.target.matches('.counter-btn')) {
                 e.stopPropagation();
                 const { stage, food, action } = e.target.dataset;
-                const currentAttempts = getFoodData(stage, food).attempts || 0;
-                const newAttempts = action === 'increase' 
-                    ? currentAttempts + 1 
-                    : Math.max(0, currentAttempts - 1);
-                
+                const currentAttempts = weaningData[stage] && weaningData[stage][food] && weaningData[stage][food].attempts || 0;
+                const newAttempts = action === 'increase' ? currentAttempts + 1 : Math.max(0, currentAttempts - 1);
                 updateFoodData(stage, food, 'attempts', newAttempts);
-                updateFoodItemDisplay(stage, food);
+                
+                const display = e.target.parentNode.querySelector('.counter-display');
+                display.textContent = newAttempts;
                 updateSummary();
-                saveToFirebase('weaningData', weaningData);
+                saveData();
             }
             
             if (e.target.matches('.star')) {
-                e.stopPropagation();
                 const { stage, food, rating } = e.target.dataset;
                 updateFoodData(stage, food, 'rating', parseInt(rating));
-                updateFoodItemDisplay(stage, food);
+                
+                // Update star display
+                const stars = e.target.parentNode.querySelectorAll('.star');
+                stars.forEach((star, index) => {
+                    star.classList.toggle('filled', index < rating);
+                });
+                
                 updateSummary();
-                saveToFirebase('weaningData', weaningData);
+                saveData();
             }
         });
 
-        // Update specific food item display
-        function updateFoodItemDisplay(stageName, foodName) {
-            const foodData = getFoodData(stageName, foodName);
-            const foodId = `${stageName}-${foodName}`.replace(/[^a-zA-Z0-9]/g, '');
-            const foodElement = document.getElementById(`food-${foodId}`);
-            
-            if (foodElement) {
-                const counterDisplay = foodElement.querySelector('.counter-display');
-                if (counterDisplay) {
-                    counterDisplay.textContent = foodData.attempts || 0;
-                }
-                
-                const stars = foodElement.querySelectorAll('.star');
-                stars.forEach((star, index) => {
-                    const rating = index + 1;
-                    if (foodData.rating >= rating) {
-                        star.classList.add('filled');
-                    } else {
-                        star.classList.remove('filled');
-                    }
-                });
-                
-                const checkbox = foodElement.querySelector('.tried-checkbox');
-                if (checkbox) {
-                    checkbox.checked = foodData.tried || false;
-                }
-            }
+        function updateFoodData(stage, food, property, value) {
+            if (!weaningData[stage]) weaningData[stage] = {};
+            if (!weaningData[stage][food]) weaningData[stage][food] = {};
+            weaningData[stage][food][property] = value;
         }
 
-        // Update all food displays (for realtime sync)
-        function updateAllFoodDisplays() {
-            Object.entries(weaningStages).forEach(([stageName, foods]) => {
-                foods.forEach(food => {
-                    updateFoodItemDisplay(stageName, food);
-                });
-            });
-        }
-
-        // Get food data
-        function getFoodData(stageName, foodName) {
-            const key = `${stageName}-${foodName}`;
-            return weaningData[key] || { tried: false, attempts: 0, rating: 0 };
-        }
-
-        // Update food data
-        function updateFoodData(stageName, foodName, property, value) {
-            const key = `${stageName}-${foodName}`;
-            if (!weaningData[key]) {
-                weaningData[key] = { tried: false, attempts: 0, rating: 0 };
-            }
-            weaningData[key][property] = value;
-        }
-
-        // Update summary statistics
+        // Summary calculations
         function updateSummary() {
             let totalFoods = 0;
             let triedFoods = 0;
@@ -810,15 +351,15 @@
             let ratedFoods = 0;
             let fiveStarFoods = 0;
 
-            Object.entries(weaningStages).forEach(([stageName, foods]) => {
+            Object.entries(weaningStages).forEach(([stage, foods]) => {
+                totalFoods += foods.length;
+                
                 foods.forEach(food => {
-                    totalFoods++;
-                    const foodData = getFoodData(stageName, food);
+                    const foodData = weaningData[stage] && weaningData[stage][food] || {};
                     
                     if (foodData.tried) triedFoods++;
-                    totalAttempts += foodData.attempts || 0;
-                    
-                    if (foodData.rating > 0) {
+                    if (foodData.attempts) totalAttempts += foodData.attempts;
+                    if (foodData.rating) {
                         totalRatings += foodData.rating;
                         ratedFoods++;
                         if (foodData.rating === 5) fiveStarFoods++;
@@ -831,34 +372,32 @@
             document.getElementById('avgRating').textContent = ratedFoods > 0 ? (totalRatings / ratedFoods).toFixed(1) : '0';
             document.getElementById('favoriteFoods').textContent = fiveStarFoods;
 
+            // Update progress bar
             const progressPercent = totalFoods > 0 ? (triedFoods / totalFoods * 100) : 0;
             document.getElementById('progressBar').style.width = `${progressPercent}%`;
             document.getElementById('progressText').textContent = `${Math.round(progressPercent)}% Complete`;
         }
 
         // Notes functionality
-        function setupNotesListener() {
-            const notesArea = document.getElementById('notesArea');
-            let timeout;
-            
-            notesArea.addEventListener('input', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    notes = this.value;
-                    saveToFirebase('notes', notes);
-                }, 1000);
+        function loadNotes() {
+            document.getElementById('notesArea').value = notes;
+            document.getElementById('notesArea').addEventListener('input', function() {
+                notes = this.value;
+                localStorage.setItem('weaningNotes', notes);
+                showAutoSave();
             });
         }
 
-        // Loading indicator
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        // Data persistence
+        function saveData() {
+            localStorage.setItem('weaningData', JSON.stringify(weaningData));
+            showAutoSave();
         }
 
         // Auto-save indicator
-        function showAutoSave(message = '✅ Synced to cloud!') {
+        function showAutoSave(customMessage = '✅ Progress Saved!') {
             const indicator = document.getElementById('autoSaveIndicator');
-            indicator.textContent = message;
+            indicator.textContent = customMessage;
             indicator.classList.add('show');
             setTimeout(() => {
                 indicator.classList.remove('show');
@@ -866,14 +405,11 @@
         }
 
         // Export functionality
-        window.exportData = function() {
+        function exportData() {
             const exportData = {
-                user: currentUser,
                 weaningData: weaningData,
-                allergyData: allergyData,
                 notes: notes,
                 customStages: weaningStages,
-                achievements: achievements,
                 exportDate: new Date().toISOString()
             };
             
@@ -882,18 +418,18 @@
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = `${currentUser}-weaning-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `zachary-weaning-data-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             
             showAutoSave('📥 Data exported successfully!');
         }
 
         // Import functionality
-        window.importData = function() {
+        function importData() {
             document.getElementById('importFile').click();
         }
 
-        window.handleImport = function(input) {
+        function handleImport(input) {
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -903,33 +439,22 @@
                         
                         if (importedData.weaningData) {
                             weaningData = importedData.weaningData;
-                            saveToFirebase('weaningData', weaningData);
-                        }
-                        
-                        if (importedData.allergyData) {
-                            allergyData = importedData.allergyData;
-                            saveToFirebase('allergyData', allergyData);
+                            localStorage.setItem('weaningData', JSON.stringify(weaningData));
                         }
                         
                         if (importedData.notes) {
                             notes = importedData.notes;
+                            localStorage.setItem('weaningNotes', notes);
                             document.getElementById('notesArea').value = notes;
-                            saveToFirebase('notes', notes);
                         }
                         
                         if (importedData.customStages) {
                             weaningStages = importedData.customStages;
-                            saveToFirebase('customStages', weaningStages);
-                        }
-
-                        if (importedData.achievements) {
-                            achievements = importedData.achievements;
-                            saveToFirebase('achievements', achievements);
                         }
                         
                         renderStages();
                         updateSummary();
-                        showAutoSave('📤 Data imported and synced!');
+                        showAutoSave('📤 Data imported successfully!');
                         
                     } catch (error) {
                         alert('Error importing data. Please check the file format.');
@@ -939,6 +464,139 @@
             }
         }
 
+        // Reaction modal functionality
+        let currentStage = '';
+        let currentFood = '';
+        let selectedSymptoms = [];
+
+        function showReactionModal(stage, food) {
+            currentStage = stage;
+            currentFood = food;
+            selectedSymptoms = [];
+            
+            document.getElementById('modalFoodName').textContent = `${food} - Reaction Report`;
+            document.getElementById('reactionModal').style.display = 'block';
+            
+            // Clear previous selections
+            document.querySelectorAll('.symptom-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Display reaction history
+            displayReactionHistory(stage, food);
+        }
+
+        function closeReactionModal() {
+            document.getElementById('reactionModal').style.display = 'none';
+            selectedSymptoms = [];
+        }
+
+        // Add symptom selection functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.symptom-btn')) {
+                const symptom = e.target.getAttribute('data-symptom');
+                
+                if (selectedSymptoms.includes(symptom)) {
+                    selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+                    e.target.classList.remove('selected');
+                } else {
+                    selectedSymptoms.push(symptom);
+                    e.target.classList.add('selected');
+                }
+            }
+        });
+
+        function reportReaction() {
+            if (selectedSymptoms.length === 0) {
+                alert('Please select at least one symptom to report.');
+                return;
+            }
+            
+            // Initialize reactions array if it doesn't exist
+            if (!weaningData[currentStage]) {
+                weaningData[currentStage] = {};
+            }
+            if (!weaningData[currentStage][currentFood]) {
+                weaningData[currentStage][currentFood] = {};
+            }
+            if (!weaningData[currentStage][currentFood].reactions) {
+                weaningData[currentStage][currentFood].reactions = [];
+            }
+            
+            // Add new reaction with UK date format (DD/MM/YYYY)
+            const now = new Date();
+            const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+            
+            const reaction = {
+                date: dateStr,
+                timestamp: now.toISOString(),
+                symptoms: [...selectedSymptoms]
+            };
+            
+            weaningData[currentStage][currentFood].reactions.push(reaction);
+            
+            // Save data
+            saveData();
+            
+            // Update display
+            displayReactionHistory(currentStage, currentFood);
+            renderStages();
+            
+            // Show success message
+            showAutoSave(`⚠️ Reaction reported for ${currentFood}`);
+            
+            // Clear selections
+            selectedSymptoms = [];
+            document.querySelectorAll('.symptom-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+        }
+
+        function displayReactionHistory(stage, food) {
+            const historyContainer = document.getElementById('reactionHistory');
+            const foodData = weaningData[stage] && weaningData[stage][food];
+            const reactions = foodData && foodData.reactions || [];
+            
+            if (reactions.length === 0) {
+                historyContainer.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No previous reactions reported</p>';
+                return;
+            }
+            
+            const symptomNames = {
+                'rash': 'Skin Rash',
+                'vomiting': 'Vomiting', 
+                'diarrhea': 'Diarrhea',
+                'constipation': 'Constipation',
+                'gassy': 'Gas/Bloating',
+                'fussy': 'Fussiness',
+                'runny_nose': 'Runny Nose',
+                'cough': 'Coughing',
+                'hives': 'Hives',
+                'wheezing': 'Wheezing',
+                'swelling': 'Swelling',
+                'other': 'Other'
+            };
+            
+            historyContainer.innerHTML = `
+                <h4 style="color: #f57c00; margin-bottom: 10px;">Previous Reactions (${reactions.length})</h4>
+                ${reactions.map(reaction => `
+                    <div class="history-item">
+                        <div class="history-date">${reaction.date}</div>
+                        <div class="history-symptoms">
+                            Symptoms: ${reaction.symptoms.map(s => symptomNames[s] || s).join(', ')}
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('reactionModal');
+            if (event.target === modal) {
+                closeReactionModal();
+            }
+        }
     </script>
 </body>
 </html>
