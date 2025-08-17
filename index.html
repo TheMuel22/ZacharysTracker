@@ -1,4 +1,4 @@
-@'
+$html1 = @'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,53 +70,6 @@
         @media (max-width: 768px) { .header h1 { font-size: 1.8rem; } .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .stage-content { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: center; } .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } .stage-option { padding: 10px; font-size: 0.9rem; } .meal-input-section { flex-direction: column; align-items: stretch; } .add-meal-btn { width: 100%; margin-top: 10px; } }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🍼 Zachary's Weaning Journey</h1>
-            <p>Track every taste, every try, every triumph!</p>
-        </div>
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
-            <button class="tab" onclick="switchTab('stages')">📅 Stages</button>
-            <button class="tab" onclick="switchTab('addMeal')">➕ Add Meal</button>
-        </div>
-        <div class="content">
-            <div id="summary" class="tab-content active">
-                <div class="summary-grid">
-                    <div class="summary-card"><div class="summary-number" id="totalTried">0</div><div class="summary-label">Foods Tried</div></div>
-                    <div class="summary-card"><div class="summary-number" id="totalAttempts">0</div><div class="summary-label">Total Attempts</div></div>
-                    <div class="summary-card"><div class="summary-number" id="avgRating">0</div><div class="summary-label">Average Rating</div></div>
-                    <div class="summary-card"><div class="summary-number" id="favoriteFoods">0</div><div class="summary-label">5-Star Foods</div></div>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" id="progressBar"></div><div class="progress-text" id="progressText">0% Complete</div></div>
-                <div class="controls">
-                    <button class="export-btn" onclick="exportData()">📥 Export Data</button>
-                    <button class="import-btn" onclick="importData()">📤 Import Data</button>
-                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(this)">
-                </div>
-                <div class="notes-section"><h3>📝 Notes</h3><textarea class="notes-textarea" id="notesArea" placeholder="Add any notes about Zachary's weaning journey..."></textarea></div>
-            </div>
-            <div id="stages" class="tab-content"><div id="stagesContainer"></div></div>
-            <div id="addMeal" class="tab-content">
-                <div class="add-meal-section">
-                    <h3>Add Custom Meal</h3>
-                    <p style="text-align: center; margin-bottom: 25px; color: #6c757d;">Add a custom food for Zachary and choose which weaning stage it belongs to.</p>
-                    <div class="stage-selector">
-                        <div class="stage-option" data-stage="Week 1-2: First Tastes"><strong>Week 1-2</strong><br>First Tastes</div>
-                        <div class="stage-option" data-stage="Week 3-4: Building Confidence"><strong>Week 3-4</strong><br>Building Confidence</div>
-                        <div class="stage-option" data-stage="Week 5-6: Introducing Lumps"><strong>Week 5-6</strong><br>Introducing Lumps</div>
-                        <div class="stage-option" data-stage="Week 7-10: Variety & Textures"><strong>Week 7-10</strong><br>Variety & Textures</div>
-                        <div class="stage-option" data-stage="Week 11-16: Chopped & Chunkier"><strong>Week 11-16</strong><br>Chopped & Chunkier</div>
-                        <div class="stage-option" data-stage="Month 9-12: Joining Family Meals"><strong>Month 9-12</strong><br>Joining Family Meals</div>
-                    </div>
-                    <div class="meal-input-section">
-                        <input type="text" id="mealName" class="meal-input" placeholder="Enter custom meal name (e.g., 'Homemade applesauce')" maxlength="50">
-                        <button id="addMealBtn" class="add-meal-btn" disabled>Add Meal</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Progress Saved!</div>
-'@ | Out-File -FilePath "h:\CodingWork\StoryCharacterTracker\This\weaning-working.html" -Encoding UTF8
+'@
+
+Set-Content -Path "h:\CodingWork\StoryCharacterTracker\This\zachary-weaning-complete.html" -Value $html1 -Encoding UTF8
