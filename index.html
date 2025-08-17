@@ -9,9 +9,12 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #ff9a9e, #fecfef); min-height: 100vh; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
         .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; text-align: center; }
-        .header-logo { max-width: 600px; max-height: 2400px; width: auto; height: auto; margin-bottom: 15px; object-fit: contain; }
+        .header-logo { max-width: 600px; max-height: 240px; width: auto; height: auto; margin-bottom: 15px; object-fit: contain; }
         .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
         .header p { font-size: 1.1rem; opacity: 0.9; }
+        .user-info { position: absolute; top: 15px; right: 15px; color: white; font-size: 0.9rem; }
+        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 5px 10px; border-radius: 15px; cursor: pointer; margin-left: 10px; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
         .tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
         .tab { flex: 1; padding: 15px; text-align: center; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; color: #6c757d; transition: all 0.3s ease; }
         .tab.active { color: #667eea; background: white; border-bottom: 3px solid #667eea; }
@@ -35,9 +38,11 @@
         .stage-header h3 { font-size: 1.3rem; }
         .stage-progress { font-size: 0.9rem; opacity: 0.9; }
         .stage-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 25px; background: #f8f9fa; }
-        .food-item { background: white; padding: 20px; border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; }
+        .food-item { background: white; padding: 20px; border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; position: relative; }
         .food-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .food-item.allergy-flagged { border-color: #dc3545; background: #fff5f5; }
         .food-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; color: #495057; }
+        .allergy-flag { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; }
         .food-controls { display: flex; flex-direction: column; gap: 10px; }
         .tried-container { display: flex; align-items: center; gap: 10px; }
         .tried-checkbox { width: 20px; height: 20px; cursor: pointer; }
@@ -49,6 +54,8 @@
         .star { font-size: 1.5rem; cursor: pointer; transition: all 0.3s ease; filter: grayscale(100%); }
         .star.filled { filter: none; }
         .star:hover { transform: scale(1.2); }
+        .allergy-btn { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; }
+        .allergy-btn:hover { background: #c82333; }
         .notes-section { background: white; padding: 20px; margin-top: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .notes-section h3 { color: #495057; margin-bottom: 15px; }
         .notes-textarea { width: 100%; height: 100px; border: 2px solid #e9ecef; border-radius: 10px; padding: 15px; font-family: inherit; resize: vertical; }
@@ -68,40 +75,108 @@
         .add-meal-btn:hover:not(:disabled) { background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
         .add-meal-btn:disabled { background: #6c757d; cursor: not-allowed; opacity: 0.6; }
         .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; z-index: 1000; }
+
+        /* Login Screen */
+        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #ff9a9e, #fecfef); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .login-container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 400px; width: 90%; }
+        .login-title { text-align: center; margin-bottom: 30px; color: #495057; }
+        .login-form { display: flex; flex-direction: column; gap: 15px; }
+        .login-input { padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; font-size: 1rem; }
+        .login-input:focus { outline: none; border-color: #667eea; }
+        .login-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .login-btn:hover { background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%); }
+        .register-toggle { text-align: center; margin-top: 15px; color: #6c757d; cursor: pointer; }
+        .register-toggle:hover { color: #495057; }
+
+        /* Achievement Popup */
+        .achievement-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); z-index: 3000; text-align: center; max-width: 400px; width: 90%; }
+        .achievement-icon { font-size: 4rem; margin-bottom: 15px; }
+        .achievement-title { font-size: 1.5rem; font-weight: bold; color: #495057; margin-bottom: 10px; }
+        .achievement-desc { color: #6c757d; margin-bottom: 20px; }
+        .achievement-close { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; }
+
+        /* Allergy Modal */
+        .allergy-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 3000; }
+        .allergy-modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .allergy-symptoms { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 20px 0; }
+        .symptom-option { background: #f8f9fa; border: 2px solid #dee2e6; padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s ease; }
+        .symptom-option.selected { background: #fff5f5; border-color: #dc3545; color: #dc3545; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; }
+        .modal-btn.save { background: #dc3545; color: white; }
+        .modal-btn.cancel { background: #6c757d; color: white; }
+
         @media (max-width: 768px) { 
-    .header { 
-        padding: 20px 15px; 
-        text-align: center; 
-    }
-    .header h1 { font-size: 1.8rem; } 
-    .header-logo { 
-        width: calc(100% - 30px); 
-        max-width: calc(100vw - 70px); 
-        height: auto; 
-        max-height: 20vh; 
-        object-fit: contain;
-        display: block;
-        margin: 0 auto 15px auto;
-    } 
-    .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } 
-    .stage-content { grid-template-columns: 1fr; } 
-    .controls { flex-direction: column; align-items: center; } 
-    .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } 
-    .stage-option { padding: 10px; font-size: 0.9rem; } 
-    .meal-input-section { flex-direction: column; align-items: stretch; } 
-    .add-meal-btn { width: 100%; margin-top: 10px; } 
-}
+            .header { padding: 20px 15px; text-align: center; }
+            .header h1 { font-size: 1.8rem; } 
+            .header-logo { width: calc(100% - 30px); max-width: calc(100vw - 70px); height: auto; max-height: 20vh; object-fit: contain; display: block; margin: 0 auto 15px auto; } 
+            .user-info { position: static; margin-bottom: 15px; }
+            .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } 
+            .stage-content { grid-template-columns: 1fr; } 
+            .controls { flex-direction: column; align-items: center; } 
+            .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } 
+            .stage-option { padding: 10px; font-size: 0.9rem; } 
+            .meal-input-section { flex-direction: column; align-items: stretch; } 
+            .add-meal-btn { width: 100%; margin-top: 10px; } 
+        }
     </style>
 </head>
 <body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <h2 class="login-title">🍼 Weaning Tracker</h2>
+            <div class="login-form">
+                <input type="text" id="loginUsername" class="login-input" placeholder="Username" maxlength="30">
+                <input type="password" id="loginPassword" class="login-input" placeholder="Password" maxlength="30">
+                <button id="loginBtn" class="login-btn">Login</button>
+                <div class="register-toggle" id="registerToggle">Don't have an account? Register here</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Popup -->
+    <div id="achievementPopup" class="achievement-popup" style="display: none;">
+        <div class="achievement-icon" id="achievementIcon">🏆</div>
+        <div class="achievement-title" id="achievementTitle">Achievement Unlocked!</div>
+        <div class="achievement-desc" id="achievementDesc">You've reached a milestone!</div>
+        <button class="achievement-close" onclick="closeAchievement()">Awesome!</button>
+    </div>
+
+    <!-- Allergy Modal -->
+    <div id="allergyModal" class="allergy-modal" style="display: none;">
+        <div class="allergy-modal-content">
+            <h3>⚠️ Report Allergic Reaction</h3>
+            <p>Food: <strong id="allergyFoodName"></strong></p>
+            <div class="allergy-symptoms">
+                <div class="symptom-option" data-symptom="rash">Skin rash/hives</div>
+                <div class="symptom-option" data-symptom="swelling">Swelling (face/lips)</div>
+                <div class="symptom-option" data-symptom="breathing">Breathing difficulty</div>
+                <div class="symptom-option" data-symptom="vomiting">Vomiting</div>
+                <div class="symptom-option" data-symptom="diarrhea">Diarrhea</div>
+                <div class="symptom-option" data-symptom="fussiness">Excessive fussiness</div>
+                <div class="symptom-option" data-symptom="other">Other symptoms</div>
+            </div>
+            <textarea id="allergyNotes" placeholder="Additional notes about the reaction..." rows="3" style="width: 100%; margin: 10px 0; padding: 10px; border: 2px solid #dee2e6; border-radius: 10px;"></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeAllergyModal()">Cancel</button>
+                <button class="modal-btn save" onclick="saveAllergyReport()">Report Reaction</button>
+            </div>
+        </div>
+    </div>
+
     <div id="loading" class="loading" style="display: none;">
         <div>🔄 Syncing data...</div>
     </div>
 
-    <div class="container">
+    <div class="container" id="mainApp" style="display: none;">
         <div class="header">
+            <div class="user-info">
+                👤 <span id="currentUser"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
             <img src="this.png" alt="Zachary's Weaning Tracker" class="header-logo">
-            <p>Track every taste, every try, every triumph!</p>
+            <p>Track every taste, every try, every triumph! (Synced across all devices)</p>
         </div>
         <div class="tabs">
             <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
@@ -168,6 +243,13 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
+        // Global variables
+        let currentUser = null;
+        let currentUserData = {};
+        let isRegistering = false;
+        let allergyModalData = {};
+        let achievementQueue = [];
+
         // Weaning stages data (mutable for custom meals)
         let weaningStages = {
             "Week 1-2: First Tastes": ["Apple puree", "Banana", "Carrot puree", "Sweet potato", "Pear puree", "Broccoli puree", "Butternut squash", "Avocado", "Baby rice", "Parsnip puree"],
@@ -180,40 +262,163 @@
 
         // Data storage
         let weaningData = {};
+        let allergyData = {};
         let notes = '';
         let selectedStage = null;
+        let achievements = {};
+
+        // Achievement definitions
+        const achievementList = {
+            firstFood: { icon: '🍎', title: 'First Bite!', desc: 'Tried your very first food!', trigger: (data) => getTotalTried(data) === 1 },
+            fiveFoods: { icon: '🌈', title: 'Food Explorer!', desc: 'Tried 5 different foods!', trigger: (data) => getTotalTried(data) === 5 },
+            tenFoods: { icon: '🏆', title: 'Taste Adventurer!', desc: 'Tried 10 different foods!', trigger: (data) => getTotalTried(data) === 10 },
+            twentyFoods: { icon: '🎖️', title: 'Super Taster!', desc: 'Tried 20 different foods!', trigger: (data) => getTotalTried(data) === 20 },
+            firstLove: { icon: '❤️', title: 'Found a Favorite!', desc: 'Gave your first 5-star rating!', trigger: (data) => getFiveStarCount(data) === 1 },
+            fiveLoves: { icon: '💝', title: 'Food Lover!', desc: 'Found 5 favorite foods!', trigger: (data) => getFiveStarCount(data) === 5 },
+            persistent: { icon: '💪', title: 'Never Give Up!', desc: 'Tried the same food 5 times!', trigger: (data) => hasRepeatedFood(data, 5) },
+            champion: { icon: '🥇', title: 'Weaning Champion!', desc: 'Tried 50 different foods!', trigger: (data) => getTotalTried(data) === 50 }
+        };
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
-            loadFromFirebase();
-            setupAddMealTab();
-            setupRealtimeListeners();
+            setupLoginSystem();
         });
+
+        // Login System
+        function setupLoginSystem() {
+            // Auto-login Zachary for existing data
+            const savedUser = localStorage.getItem('weaningUser');
+            if (savedUser === 'Zachary') {
+                currentUser = 'Zachary';
+                document.getElementById('currentUser').textContent = currentUser;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                loadFromFirebase();
+                setupAddMealTab();
+                setupRealtimeListeners();
+            }
+
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('registerToggle').addEventListener('click', toggleRegister);
+        }
+
+        function toggleRegister() {
+            isRegistering = !isRegistering;
+            const btn = document.getElementById('loginBtn');
+            const toggle = document.getElementById('registerToggle');
+            
+            if (isRegistering) {
+                btn.textContent = 'Register';
+                toggle.textContent = 'Already have an account? Login here';
+            } else {
+                btn.textContent = 'Login';
+                toggle.textContent = "Don't have an account? Register here";
+            }
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const userRef = ref(database, `users/${username}`);
+                const userSnapshot = await get(userRef);
+
+                if (isRegistering) {
+                    if (userSnapshot.exists()) {
+                        alert('Username already exists! Please choose a different one.');
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    // Create new user
+                    await set(userRef, {
+                        password: password,
+                        createdAt: new Date().toISOString(),
+                        weaningData: {},
+                        allergyData: {},
+                        notes: '',
+                        achievements: {}
+                    });
+                    
+                    currentUser = username;
+                    showAutoSave(`✅ Account created for ${username}!`);
+                } else {
+                    if (!userSnapshot.exists()) {
+                        alert('User not found! Please register first.');
+                        showLoading(false);
+                        return;
+                    }
+
+                    const userData = userSnapshot.val();
+                    if (userData.password !== password) {
+                        alert('Incorrect password!');
+                        showLoading(false);
+                        return;
+                    }
+
+                    currentUser = username;
+                }
+
+                // Save login state and switch to main app
+                localStorage.setItem('weaningUser', currentUser);
+                document.getElementById('currentUser').textContent = currentUser;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                
+                loadFromFirebase();
+                setupAddMealTab();
+                setupRealtimeListeners();
+                showLoading(false);
+
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed. Please try again.');
+                showLoading(false);
+            }
+        }
+
+        window.logout = function() {
+            currentUser = null;
+            localStorage.removeItem('weaningUser');
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            weaningData = {};
+            allergyData = {};
+            notes = '';
+            achievements = {};
+        }
 
         // Load data from Firebase
         async function loadFromFirebase() {
+            if (!currentUser) return;
+            
             showLoading(true);
             try {
-                // Load weaning data
-                const dataRef = ref(database, 'weaningData');
-                const dataSnapshot = await get(dataRef);
-                if (dataSnapshot.exists()) {
-                    weaningData = dataSnapshot.val();
-                }
+                const userRef = ref(database, `users/${currentUser}`);
+                const userSnapshot = await get(userRef);
+                
+                if (userSnapshot.exists()) {
+                    currentUserData = userSnapshot.val();
+                    weaningData = currentUserData.weaningData || {};
+                    allergyData = currentUserData.allergyData || {};
+                    notes = currentUserData.notes || '';
+                    achievements = currentUserData.achievements || {};
+                    
+                    if (currentUserData.customStages) {
+                        weaningStages = { ...weaningStages, ...currentUserData.customStages };
+                    }
 
-                // Load notes
-                const notesRef = ref(database, 'notes');
-                const notesSnapshot = await get(notesRef);
-                if (notesSnapshot.exists()) {
-                    notes = notesSnapshot.val();
                     document.getElementById('notesArea').value = notes;
-                }
-
-                // Load custom stages
-                const stagesRef = ref(database, 'customStages');
-                const stagesSnapshot = await get(stagesRef);
-                if (stagesSnapshot.exists()) {
-                    weaningStages = { ...weaningStages, ...stagesSnapshot.val() };
                 }
 
                 renderStages();
@@ -229,49 +434,140 @@
 
         // Setup realtime listeners for changes
         function setupRealtimeListeners() {
-            // Listen for data changes
-            const dataRef = ref(database, 'weaningData');
-            onValue(dataRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    weaningData = snapshot.val();
-                    updateSummary();
-                    updateAllFoodDisplays();
-                }
-            });
+            if (!currentUser) return;
 
-            // Listen for notes changes
-            const notesRef = ref(database, 'notes');
-            onValue(notesRef, (snapshot) => {
+            const userRef = ref(database, `users/${currentUser}`);
+            onValue(userRef, (snapshot) => {
                 if (snapshot.exists()) {
-                    const newNotes = snapshot.val();
-                    if (newNotes !== notes) {
-                        notes = newNotes;
+                    const userData = snapshot.val();
+                    weaningData = userData.weaningData || {};
+                    allergyData = userData.allergyData || {};
+                    
+                    if (userData.notes !== notes) {
+                        notes = userData.notes || '';
                         document.getElementById('notesArea').value = notes;
                     }
-                }
-            });
-
-            // Listen for custom stages changes
-            const stagesRef = ref(database, 'customStages');
-            onValue(stagesRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const customStages = snapshot.val();
-                    weaningStages = { ...weaningStages, ...customStages };
-                    renderStages();
+                    
+                    if (userData.customStages) {
+                        weaningStages = { ...weaningStages, ...userData.customStages };
+                        renderStages();
+                    }
+                    
+                    achievements = userData.achievements || {};
                     updateSummary();
+                    updateAllFoodDisplays();
                 }
             });
         }
 
         // Save data to Firebase
-        async function saveToFirebase(path, data) {
+        async function saveToFirebase(dataType, data) {
+            if (!currentUser) return;
+
             try {
-                await set(ref(database, path), data);
+                const userRef = ref(database, `users/${currentUser}/${dataType}`);
+                await set(userRef, data);
+                
+                if (dataType === 'weaningData') {
+                    checkAchievements();
+                }
+                
                 showAutoSave('✅ Synced to cloud!');
             } catch (error) {
                 console.error('Error saving to Firebase:', error);
                 showAutoSave('❌ Sync failed');
             }
+        }
+
+        // Achievement System
+        function checkAchievements() {
+            Object.entries(achievementList).forEach(([key, achievement]) => {
+                if (!achievements[key] && achievement.trigger(weaningData)) {
+                    achievements[key] = {
+                        unlocked: true,
+                        date: new Date().toISOString()
+                    };
+                    
+                    showAchievement(achievement);
+                    saveToFirebase('achievements', achievements);
+                }
+            });
+        }
+
+        function showAchievement(achievement) {
+            document.getElementById('achievementIcon').textContent = achievement.icon;
+            document.getElementById('achievementTitle').textContent = achievement.title;
+            document.getElementById('achievementDesc').textContent = achievement.desc;
+            document.getElementById('achievementPopup').style.display = 'block';
+        }
+
+        window.closeAchievement = function() {
+            document.getElementById('achievementPopup').style.display = 'none';
+        }
+
+        // Helper functions for achievements
+        function getTotalTried(data) {
+            return Object.values(data).filter(item => item.tried).length;
+        }
+
+        function getFiveStarCount(data) {
+            return Object.values(data).filter(item => item.rating === 5).length;
+        }
+
+        function hasRepeatedFood(data, count) {
+            return Object.values(data).some(item => item.attempts >= count);
+        }
+
+        // Allergy System
+        window.openAllergyModal = function(stageName, foodName) {
+            allergyModalData = { stage: stageName, food: foodName };
+            document.getElementById('allergyFoodName').textContent = foodName;
+            document.getElementById('allergyModal').style.display = 'block';
+        }
+
+        window.closeAllergyModal = function() {
+            document.getElementById('allergyModal').style.display = 'none';
+            // Clear selections
+            document.querySelectorAll('.symptom-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById('allergyNotes').value = '';
+        }
+
+        // Symptom selection
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.symptom-option')) {
+                e.target.classList.toggle('selected');
+            }
+        });
+
+        window.saveAllergyReport = function() {
+            const selectedSymptoms = Array.from(document.querySelectorAll('.symptom-option.selected'))
+                .map(opt => opt.dataset.symptom);
+            const notes = document.getElementById('allergyNotes').value;
+            
+            if (selectedSymptoms.length === 0) {
+                alert('Please select at least one symptom');
+                return;
+            }
+
+            const allergyKey = `${allergyModalData.stage}-${allergyModalData.food}`;
+            allergyData[allergyKey] = {
+                symptoms: selectedSymptoms,
+                notes: notes,
+                date: new Date().toISOString()
+            };
+
+            // Mark food item visually
+            const foodId = `${allergyModalData.stage}-${allergyModalData.food}`.replace(/[^a-zA-Z0-9]/g, '');
+            const foodElement = document.getElementById(`food-${foodId}`);
+            if (foodElement) {
+                foodElement.classList.add('allergy-flagged');
+            }
+
+            saveToFirebase('allergyData', allergyData);
+            closeAllergyModal();
+            showAutoSave('⚠️ Allergy reaction reported!');
         }
 
         // Tab switching functionality
@@ -325,7 +621,6 @@
             if (selectedStage && mealName) {
                 weaningStages[selectedStage].push(mealName);
                 
-                // Save custom stages to Firebase
                 const customStages = {};
                 Object.keys(weaningStages).forEach(stage => {
                     if (weaningStages[stage].includes(mealName)) {
@@ -385,11 +680,14 @@
         // Create food item HTML
         function createFoodItemHTML(stageName, foodName) {
             const foodData = getFoodData(stageName, foodName);
+            const allergyKey = `${stageName}-${foodName}`;
+            const hasAllergy = allergyData[allergyKey];
             const foodId = `${stageName}-${foodName}`.replace(/[^a-zA-Z0-9]/g, '');
 
             return `
-                <div class="food-item" id="food-${foodId}">
+                <div class="food-item ${hasAllergy ? 'allergy-flagged' : ''}" id="food-${foodId}">
                     <div class="food-name">${foodName}</div>
+                    ${hasAllergy ? '<div class="allergy-flag" title="Allergic reaction reported">⚠️</div>' : ''}
                     <div class="food-controls">
                         <div class="tried-container">
                             <input type="checkbox" class="tried-checkbox" 
@@ -409,6 +707,9 @@
                                        data-stage="${stageName}" data-food="${foodName}" data-rating="${rating}">⭐</span>`
                             ).join('')}
                         </div>
+                        <button class="allergy-btn" onclick="openAllergyModal('${stageName}', '${foodName}')">
+                            ⚠️ Report Reaction
+                        </button>
                     </div>
                 </div>
             `;
@@ -545,7 +846,7 @@
                 timeout = setTimeout(() => {
                     notes = this.value;
                     saveToFirebase('notes', notes);
-                }, 1000); // Debounce saves
+                }, 1000);
             });
         }
 
@@ -567,9 +868,12 @@
         // Export functionality
         window.exportData = function() {
             const exportData = {
+                user: currentUser,
                 weaningData: weaningData,
+                allergyData: allergyData,
                 notes: notes,
                 customStages: weaningStages,
+                achievements: achievements,
                 exportDate: new Date().toISOString()
             };
             
@@ -578,7 +882,7 @@
             
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
-            link.download = `zachary-weaning-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `${currentUser}-weaning-data-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             
             showAutoSave('📥 Data exported successfully!');
@@ -602,6 +906,11 @@
                             saveToFirebase('weaningData', weaningData);
                         }
                         
+                        if (importedData.allergyData) {
+                            allergyData = importedData.allergyData;
+                            saveToFirebase('allergyData', allergyData);
+                        }
+                        
                         if (importedData.notes) {
                             notes = importedData.notes;
                             document.getElementById('notesArea').value = notes;
@@ -611,6 +920,11 @@
                         if (importedData.customStages) {
                             weaningStages = importedData.customStages;
                             saveToFirebase('customStages', weaningStages);
+                        }
+
+                        if (importedData.achievements) {
+                            achievements = importedData.achievements;
+                            saveToFirebase('achievements', achievements);
                         }
                         
                         renderStages();
@@ -628,8 +942,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
