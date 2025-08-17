@@ -66,14 +66,19 @@
         .add-meal-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
         .add-meal-btn:hover:not(:disabled) { background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
         .add-meal-btn:disabled { background: #6c757d; cursor: not-allowed; opacity: 0.6; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; z-index: 1000; }
         @media (max-width: 768px) { .header h1 { font-size: 1.8rem; } .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .stage-content { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: center; } .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } .stage-option { padding: 10px; font-size: 0.9rem; } .meal-input-section { flex-direction: column; align-items: stretch; } .add-meal-btn { width: 100%; margin-top: 10px; } }
     </style>
 </head>
 <body>
+    <div id="loading" class="loading" style="display: none;">
+        <div>🔄 Syncing data...</div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🍼 Zachary's Weaning Journey</h1>
-            <p>Track every taste, every try, every triumph!</p>
+            <p>Track every taste, every try, every triumph! (Synced across all devices)</p>
         </div>
         <div class="tabs">
             <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
@@ -117,9 +122,28 @@
             </div>
         </div>
     </div>
-    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Progress Saved!</div>
+    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Synced to cloud!</div>
     
-    <script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getDatabase, ref, onValue, set, push, get } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
+
+        // Firebase configuration (you'll need to replace this with your own)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoKey-ReplaceWithYourKey",
+            authDomain: "zachary-weaning.firebaseapp.com",
+            databaseURL: "https://zachary-weaning-default-rtdb.firebaseio.com",
+            projectId: "zachary-weaning",
+            storageBucket: "zachary-weaning.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
         // Weaning stages data (mutable for custom meals)
         let weaningStages = {
             "Week 1-2: First Tastes": ["Apple puree", "Banana", "Carrot puree", "Sweet potato", "Pear puree", "Broccoli puree", "Butternut squash", "Avocado", "Baby rice", "Parsnip puree"],
@@ -131,37 +155,114 @@
         };
 
         // Data storage
-        let weaningData = JSON.parse(localStorage.getItem('weaningData') || '{}');
-        let notes = localStorage.getItem('weaningNotes') || '';
+        let weaningData = {};
+        let notes = '';
         let selectedStage = null;
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
-            renderStages();
-            updateSummary();
-            loadNotes();
+            loadFromFirebase();
             setupAddMealTab();
+            setupRealtimeListeners();
         });
 
+        // Load data from Firebase
+        async function loadFromFirebase() {
+            showLoading(true);
+            try {
+                // Load weaning data
+                const dataRef = ref(database, 'weaningData');
+                const dataSnapshot = await get(dataRef);
+                if (dataSnapshot.exists()) {
+                    weaningData = dataSnapshot.val();
+                }
+
+                // Load notes
+                const notesRef = ref(database, 'notes');
+                const notesSnapshot = await get(notesRef);
+                if (notesSnapshot.exists()) {
+                    notes = notesSnapshot.val();
+                    document.getElementById('notesArea').value = notes;
+                }
+
+                // Load custom stages
+                const stagesRef = ref(database, 'customStages');
+                const stagesSnapshot = await get(stagesRef);
+                if (stagesSnapshot.exists()) {
+                    weaningStages = { ...weaningStages, ...stagesSnapshot.val() };
+                }
+
+                renderStages();
+                updateSummary();
+                setupNotesListener();
+                showLoading(false);
+            } catch (error) {
+                console.error('Error loading from Firebase:', error);
+                showLoading(false);
+                showAutoSave('❌ Connection error - using local data');
+            }
+        }
+
+        // Setup realtime listeners for changes
+        function setupRealtimeListeners() {
+            // Listen for data changes
+            const dataRef = ref(database, 'weaningData');
+            onValue(dataRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    weaningData = snapshot.val();
+                    updateSummary();
+                    updateAllFoodDisplays();
+                }
+            });
+
+            // Listen for notes changes
+            const notesRef = ref(database, 'notes');
+            onValue(notesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const newNotes = snapshot.val();
+                    if (newNotes !== notes) {
+                        notes = newNotes;
+                        document.getElementById('notesArea').value = notes;
+                    }
+                }
+            });
+
+            // Listen for custom stages changes
+            const stagesRef = ref(database, 'customStages');
+            onValue(stagesRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const customStages = snapshot.val();
+                    weaningStages = { ...weaningStages, ...customStages };
+                    renderStages();
+                    updateSummary();
+                }
+            });
+        }
+
+        // Save data to Firebase
+        async function saveToFirebase(path, data) {
+            try {
+                await set(ref(database, path), data);
+                showAutoSave('✅ Synced to cloud!');
+            } catch (error) {
+                console.error('Error saving to Firebase:', error);
+                showAutoSave('❌ Sync failed');
+            }
+        }
+
         // Tab switching functionality
-        function switchTab(tabName) {
-            // Hide all tab contents
+        window.switchTab = function(tabName) {
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             
-            // Remove active class from all tabs
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Show selected tab content
             document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to clicked tab
             event.target.classList.add('active');
             
-            // Update stages if switching to stages tab
             if (tabName === 'stages') {
                 renderStages();
             }
@@ -173,22 +274,16 @@
             const mealInput = document.getElementById('mealName');
             const addBtn = document.getElementById('addMealBtn');
 
-            // Stage selection
             stageOptions.forEach(option => {
                 option.addEventListener('click', function() {
-                    // Remove previous selection
                     stageOptions.forEach(opt => opt.classList.remove('selected'));
-                    // Add selection to clicked option
                     this.classList.add('selected');
                     selectedStage = this.getAttribute('data-stage');
                     updateAddButton();
                 });
             });
 
-            // Meal input
             mealInput.addEventListener('input', updateAddButton);
-            
-            // Add meal button
             addBtn.addEventListener('click', addCustomMeal);
         }
 
@@ -199,28 +294,32 @@
             addBtn.disabled = !isValid;
         }
 
-        function addCustomMeal() {
+        async function addCustomMeal() {
             const mealInput = document.getElementById('mealName');
             const mealName = mealInput.value.trim();
             
             if (selectedStage && mealName) {
-                // Add to weaning stages
                 weaningStages[selectedStage].push(mealName);
                 
-                // Clear input
-                mealInput.value = '';
+                // Save custom stages to Firebase
+                const customStages = {};
+                Object.keys(weaningStages).forEach(stage => {
+                    if (weaningStages[stage].includes(mealName)) {
+                        customStages[stage] = weaningStages[stage];
+                    }
+                });
                 
-                // Reset selection
+                await saveToFirebase('customStages', customStages);
+                
+                mealInput.value = '';
                 document.querySelectorAll('.stage-option').forEach(opt => {
                     opt.classList.remove('selected');
                 });
                 selectedStage = null;
                 updateAddButton();
                 
-                // Show success message
                 showAutoSave(`Added "${mealName}" to ${selectedStage}`);
                 
-                // Re-render stages if on stages tab
                 if (document.getElementById('stages').classList.contains('active')) {
                     renderStages();
                 }
@@ -254,7 +353,7 @@
         }
 
         // Toggle stage visibility
-        function toggleStage(stageName) {
+        window.toggleStage = function(stageName) {
             const stageContent = document.getElementById(`stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}`);
             stageContent.style.display = stageContent.style.display === 'none' ? 'grid' : 'none';
         }
@@ -297,7 +396,7 @@
                 const { stage, food } = e.target.dataset;
                 updateFoodData(stage, food, 'tried', e.target.checked);
                 updateSummary();
-                saveData();
+                saveToFirebase('weaningData', weaningData);
             }
             
             if (e.target.matches('.counter-btn')) {
@@ -311,7 +410,7 @@
                 updateFoodData(stage, food, 'attempts', newAttempts);
                 updateFoodItemDisplay(stage, food);
                 updateSummary();
-                saveData();
+                saveToFirebase('weaningData', weaningData);
             }
             
             if (e.target.matches('.star')) {
@@ -320,24 +419,22 @@
                 updateFoodData(stage, food, 'rating', parseInt(rating));
                 updateFoodItemDisplay(stage, food);
                 updateSummary();
-                saveData();
+                saveToFirebase('weaningData', weaningData);
             }
         });
 
-        // Update specific food item display without full re-render
+        // Update specific food item display
         function updateFoodItemDisplay(stageName, foodName) {
             const foodData = getFoodData(stageName, foodName);
             const foodId = `${stageName}-${foodName}`.replace(/[^a-zA-Z0-9]/g, '');
             const foodElement = document.getElementById(`food-${foodId}`);
             
             if (foodElement) {
-                // Update attempts counter
                 const counterDisplay = foodElement.querySelector('.counter-display');
                 if (counterDisplay) {
                     counterDisplay.textContent = foodData.attempts || 0;
                 }
                 
-                // Update star rating
                 const stars = foodElement.querySelectorAll('.star');
                 stars.forEach((star, index) => {
                     const rating = index + 1;
@@ -348,12 +445,20 @@
                     }
                 });
                 
-                // Update checkbox
                 const checkbox = foodElement.querySelector('.tried-checkbox');
                 if (checkbox) {
                     checkbox.checked = foodData.tried || false;
                 }
             }
+        }
+
+        // Update all food displays (for realtime sync)
+        function updateAllFoodDisplays() {
+            Object.entries(weaningStages).forEach(([stageName, foods]) => {
+                foods.forEach(food => {
+                    updateFoodItemDisplay(stageName, food);
+                });
+            });
         }
 
         // Get food data
@@ -396,38 +501,39 @@
                 });
             });
 
-            // Update DOM
             document.getElementById('totalTried').textContent = triedFoods;
             document.getElementById('totalAttempts').textContent = totalAttempts;
             document.getElementById('avgRating').textContent = ratedFoods > 0 ? (totalRatings / ratedFoods).toFixed(1) : '0';
             document.getElementById('favoriteFoods').textContent = fiveStarFoods;
 
-            // Update progress bar
             const progressPercent = totalFoods > 0 ? (triedFoods / totalFoods * 100) : 0;
             document.getElementById('progressBar').style.width = `${progressPercent}%`;
             document.getElementById('progressText').textContent = `${Math.round(progressPercent)}% Complete`;
         }
 
         // Notes functionality
-        function loadNotes() {
-            document.getElementById('notesArea').value = notes;
-            document.getElementById('notesArea').addEventListener('input', function() {
-                notes = this.value;
-                localStorage.setItem('weaningNotes', notes);
-                showAutoSave();
+        function setupNotesListener() {
+            const notesArea = document.getElementById('notesArea');
+            let timeout;
+            
+            notesArea.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    notes = this.value;
+                    saveToFirebase('notes', notes);
+                }, 1000); // Debounce saves
             });
         }
 
-        // Data persistence
-        function saveData() {
-            localStorage.setItem('weaningData', JSON.stringify(weaningData));
-            showAutoSave();
+        // Loading indicator
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
         // Auto-save indicator
-        function showAutoSave(customMessage = '✅ Progress Saved!') {
+        function showAutoSave(message = '✅ Synced to cloud!') {
             const indicator = document.getElementById('autoSaveIndicator');
-            indicator.textContent = customMessage;
+            indicator.textContent = message;
             indicator.classList.add('show');
             setTimeout(() => {
                 indicator.classList.remove('show');
@@ -435,7 +541,7 @@
         }
 
         // Export functionality
-        function exportData() {
+        window.exportData = function() {
             const exportData = {
                 weaningData: weaningData,
                 notes: notes,
@@ -455,11 +561,11 @@
         }
 
         // Import functionality
-        function importData() {
+        window.importData = function() {
             document.getElementById('importFile').click();
         }
 
-        function handleImport(input) {
+        window.handleImport = function(input) {
             const file = input.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -469,22 +575,23 @@
                         
                         if (importedData.weaningData) {
                             weaningData = importedData.weaningData;
-                            localStorage.setItem('weaningData', JSON.stringify(weaningData));
+                            saveToFirebase('weaningData', weaningData);
                         }
                         
                         if (importedData.notes) {
                             notes = importedData.notes;
-                            localStorage.setItem('weaningNotes', notes);
                             document.getElementById('notesArea').value = notes;
+                            saveToFirebase('notes', notes);
                         }
                         
                         if (importedData.customStages) {
                             weaningStages = importedData.customStages;
+                            saveToFirebase('customStages', weaningStages);
                         }
                         
                         renderStages();
                         updateSummary();
-                        showAutoSave('📤 Data imported successfully!');
+                        showAutoSave('📤 Data imported and synced!');
                         
                     } catch (error) {
                         alert('Error importing data. Please check the file format.');
@@ -493,6 +600,7 @@
                 reader.readAsText(file);
             }
         }
+
     </script>
 </body>
 </html>
