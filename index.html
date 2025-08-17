@@ -28,8 +28,8 @@
         .header h1 { font-size: calc(1.2rem + 1vw); margin-bottom: 8px; }
         .header p { font-size: calc(0.8rem + 0.5vw); opacity: 0.9; }
         .user-info { position: absolute; top: 15px; left: 15px; color: white; font-size: calc(0.7rem + 0.3vw); opacity: 0.9; }
-        .logout-btn, .sync-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 15px; cursor: pointer; font-size: calc(0.7rem + 0.2vw); }
-        .logout-btn:hover, .sync-btn:hover { background: rgba(255,255,255,0.3); }
+        .logout-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 15px; cursor: pointer; font-size: calc(0.7rem + 0.2vw); }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
         .sync-status { position: absolute; top: 50px; right: 15px; color: white; font-size: calc(0.6rem + 0.2vw); opacity: 0.8; }
         
         .tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
@@ -133,7 +133,7 @@
         /* Mobile specific adjustments */
         @media (max-width: 768px) {
             body { padding: 0; }
-            .user-info, .logout-btn, .sync-btn, .sync-status { position: static; display: inline-block; margin: 5px; font-size: 0.8rem; }
+            .user-info, .logout-btn, .sync-status { position: static; display: inline-block; margin: 5px; font-size: 0.8rem; }
             .header { text-align: center; padding: 15px; }
             .stage-content { grid-template-columns: 1fr; }
             .meal-input-section { flex-direction: column; align-items: stretch; }
@@ -164,9 +164,8 @@
         <div class="container">
             <div class="header">
                 <div class="user-info" id="userInfo">Welcome!</div>
-                <button class="sync-btn" id="syncBtn">🔄 Sync</button>
                 <button class="logout-btn" id="logoutBtn">Logout</button>
-                <div class="sync-status" id="syncStatus">Syncing...</div>
+                <div class="sync-status" id="syncStatus">🔄 Connecting...</div>
                 <img src="this.png" alt="Logo" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <h1 id="headerTitle" style="display: none;">🍼 Weaning Journey</h1>
                 <p>Track every taste, every try, every triumph!</p>
@@ -255,7 +254,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-        import { getDatabase, ref, set, get, onValue, push } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
+        import { getDatabase, ref, set, get, onValue, push, off } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -276,36 +275,28 @@
         window.firebaseSet = set;
         window.firebaseGet = get;
         window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
 
         // Initialize app after Firebase is ready
         document.dispatchEvent(new CustomEvent('firebaseReady'));
     </script>
 
     <script>
-        // Wait for Firebase to be ready
+        // Firebase and sync variables
         let firebaseReady = false;
+        let syncInProgress = false;
+        let firebaseListener = null;
+
+        // Wait for Firebase to be ready
         document.addEventListener('firebaseReady', function() {
             firebaseReady = true;
             if (currentUser) {
-                setupFirebaseSync();
+                setupRealTimeSync();
             }
         });
 
         // User authentication system
         let currentUser = null;
-        let userAccounts = JSON.parse(localStorage.getItem('userAccounts') || '{}');
-
-        // Default account (backward compatibility)
-        if (!userAccounts['Zachary']) {
-            userAccounts['Zachary'] = {
-                password: 'Holderness1',
-                childName: 'Zachary',
-                weaningData: {},
-                notes: '',
-                achievements: []
-            };
-            localStorage.setItem('userAccounts', JSON.stringify(userAccounts));
-        }
 
         // Weaning stages data
         let weaningStages = {
@@ -319,10 +310,10 @@
         let weaningData = {};
         let notes = '';
         let selectedStage = '';
-        let syncTimeout = null;
+        let achievements = [];
 
         // Achievement definitions
-        const achievements = [
+        const achievementDefinitions = [
             { id: 'first_food', name: 'First Taste', description: 'Tried your first food!', icon: '🥄', trigger: 'tried', count: 1 },
             { id: 'five_foods', name: 'Foodie Explorer', description: 'Tried 5 different foods!', icon: '🌟', trigger: 'tried', count: 5 },
             { id: 'ten_foods', name: 'Taste Adventurer', description: 'Tried 10 different foods!', icon: '🎯', trigger: 'tried', count: 10 },
@@ -343,7 +334,6 @@
             document.getElementById('loginBtn').addEventListener('click', handleLogin);
             document.getElementById('registerBtn').addEventListener('click', handleRegister);
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-            document.getElementById('syncBtn').addEventListener('click', manualSync);
             
             document.getElementById('usernameInput').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') document.getElementById('passwordInput').focus();
@@ -358,10 +348,9 @@
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
                 currentUser = savedUser;
-                loadUserData();
                 showMainApp();
                 if (firebaseReady) {
-                    setupFirebaseSync();
+                    setupRealTimeSync();
                 }
             } else {
                 showLoginScreen();
@@ -378,18 +367,39 @@
                 return;
             }
 
-            if (userAccounts[username] && userAccounts[username].password === password) {
+            // Check default account first
+            if (username === 'Zachary' && password === 'Holderness1') {
                 currentUser = username;
                 localStorage.setItem('currentUser', username);
-                loadUserData();
                 showMainApp();
                 errorDiv.textContent = '';
                 
                 if (firebaseReady) {
-                    setupFirebaseSync();
+                    setupRealTimeSync();
                 }
+                return;
+            }
+
+            // Check if account exists in Firebase
+            if (firebaseReady) {
+                updateSyncStatus('🔍 Verifying account...');
+                const userRef = window.firebaseRef(window.firebaseDB, `accounts/${username}`);
+                window.firebaseGet(userRef).then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData && userData.password === password) {
+                        currentUser = username;
+                        localStorage.setItem('currentUser', username);
+                        showMainApp();
+                        errorDiv.textContent = '';
+                        setupRealTimeSync();
+                    } else {
+                        errorDiv.textContent = 'Invalid username or password';
+                    }
+                }).catch(() => {
+                    errorDiv.textContent = 'Login error. Please try again.';
+                });
             } else {
-                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.textContent = 'Connecting to server...';
             }
         }
 
@@ -403,156 +413,174 @@
                 return;
             }
 
-            if (userAccounts[username]) {
-                errorDiv.textContent = 'Username already exists';
+            if (!firebaseReady) {
+                errorDiv.textContent = 'Please wait, connecting to server...';
                 return;
             }
 
-            userAccounts[username] = {
-                password: password,
-                childName: username,
-                weaningData: {},
-                notes: '',
-                achievements: []
-            };
+            updateSyncStatus('📝 Creating account...');
 
-            localStorage.setItem('userAccounts', JSON.stringify(userAccounts));
-            
-            currentUser = username;
-            localStorage.setItem('currentUser', username);
-            loadUserData();
-            showMainApp();
-            showAutoSave(`Welcome ${username}! Account created successfully! 🎉`);
-            
-            if (firebaseReady) {
-                setupFirebaseSync();
-            }
+            // Check if username exists
+            const accountRef = window.firebaseRef(window.firebaseDB, `accounts/${username}`);
+            window.firebaseGet(accountRef).then((snapshot) => {
+                if (snapshot.val()) {
+                    errorDiv.textContent = 'Username already exists';
+                    updateSyncStatus('❌ Username taken');
+                    return;
+                }
+
+                // Create new account
+                const newAccount = {
+                    password: password,
+                    childName: username,
+                    created: new Date().toISOString()
+                };
+
+                window.firebaseSet(accountRef, newAccount).then(() => {
+                    currentUser = username;
+                    localStorage.setItem('currentUser', username);
+                    showMainApp();
+                    showAutoSave(`Welcome ${username}! Account created successfully! 🎉`);
+                    setupRealTimeSync();
+                }).catch(() => {
+                    errorDiv.textContent = 'Failed to create account. Please try again.';
+                    updateSyncStatus('❌ Account creation failed');
+                });
+            });
         }
 
         function handleLogout() {
-            syncToFirebase();
+            if (firebaseListener) {
+                window.firebaseOff(firebaseListener);
+                firebaseListener = null;
+            }
+            
             currentUser = null;
+            weaningData = {};
+            notes = '';
+            achievements = [];
             localStorage.removeItem('currentUser');
             showLoginScreen();
-        }
-
-        function loadUserData() {
-            if (!currentUser || !userAccounts[currentUser]) return;
-            
-            const userData = userAccounts[currentUser];
-            weaningData = userData.weaningData || {};
-            notes = userData.notes || '';
-            
-            // Update UI
-            document.getElementById('userInfo').textContent = `Welcome, ${userData.childName}!`;
-            document.getElementById('headerTitle').textContent = `🍼 ${userData.childName}'s Weaning Journey`;
-            document.getElementById('notesArea').placeholder = `Add any notes about ${userData.childName}'s weaning journey...`;
-            
-            // Render everything
-            renderStageSelector();
-            renderStages();
-            updateSummary();
-            loadNotes();
-        }
-
-        function saveUserData() {
-            if (!currentUser) return;
-            
-            userAccounts[currentUser].weaningData = weaningData;
-            userAccounts[currentUser].notes = notes;
-            localStorage.setItem('userAccounts', JSON.stringify(userAccounts));
         }
 
         function showLoginScreen() {
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('loginError').textContent = '';
             document.getElementById('usernameInput').focus();
         }
 
         function showMainApp() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
+            
+            // Update UI
+            document.getElementById('userInfo').textContent = `Welcome, ${currentUser}!`;
+            document.getElementById('headerTitle').textContent = `🍼 ${currentUser}'s Weaning Journey`;
+            document.getElementById('notesArea').placeholder = `Add any notes about ${currentUser}'s weaning journey...`;
+            
+            // Initialize data
+            loadLocalData();
+            renderStageSelector();
+            renderStages();
+            updateSummary();
+            loadNotes();
         }
 
-        // Firebase sync functions
-        function setupFirebaseSync() {
+        // Firebase real-time sync functions
+        function setupRealTimeSync() {
             if (!firebaseReady || !currentUser) return;
+
+            updateSyncStatus('🔄 Connecting...');
+
+            // Remove any existing listener
+            if (firebaseListener) {
+                window.firebaseOff(firebaseListener);
+            }
+
+            // Set up real-time listener for user data
+            const userDataRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
             
-            updateSyncStatus('🔄 Syncing...');
-            
-            // Listen for remote changes
-            const userRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
-            window.firebaseOnValue(userRef, (snapshot) => {
+            firebaseListener = window.firebaseOnValue(userDataRef, (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
+                
+                if (data && !syncInProgress) {
                     // Update local data with remote data
                     if (data.weaningData) {
                         weaningData = data.weaningData;
-                        userAccounts[currentUser].weaningData = data.weaningData;
                     }
                     if (data.notes !== undefined) {
                         notes = data.notes;
-                        userAccounts[currentUser].notes = data.notes;
                         document.getElementById('notesArea').value = notes;
                     }
                     if (data.achievements) {
-                        userAccounts[currentUser].achievements = data.achievements;
+                        achievements = data.achievements;
                     }
                     
-                    localStorage.setItem('userAccounts', JSON.stringify(userAccounts));
+                    // Re-render everything with new data
                     renderStages();
                     updateSummary();
                     updateSyncStatus('✅ Synced');
+                } else if (!data) {
+                    // No remote data exists, sync local to remote
+                    syncToFirebase(false);
                 } else {
-                    // No remote data, sync local to remote
-                    syncToFirebase();
+                    updateSyncStatus('✅ Synced');
                 }
+            }, (error) => {
+                console.error('Firebase sync error:', error);
+                updateSyncStatus('❌ Sync error');
             });
         }
 
-        function syncToFirebase() {
+        function syncToFirebase(showStatus = true) {
             if (!firebaseReady || !currentUser) return;
-            
-            clearTimeout(syncTimeout);
-            syncTimeout = setTimeout(() => {
-                updateSyncStatus('🔄 Syncing...');
-                
-                const userRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
-                const userData = userAccounts[currentUser];
-                
-                window.firebaseSet(userRef, {
-                    weaningData: userData.weaningData || {},
-                    notes: userData.notes || '',
-                    achievements: userData.achievements || [],
-                    lastSync: new Date().toISOString()
-                }).then(() => {
-                    updateSyncStatus('✅ Synced');
-                }).catch((error) => {
-                    console.error('Sync error:', error);
-                    updateSyncStatus('❌ Sync failed');
-                });
-            }, 1000);
-        }
 
-        function manualSync() {
-            if (!firebaseReady) {
-                showAutoSave('⚠️ Firebase not ready');
-                return;
-            }
-            
-            syncToFirebase();
-            showAutoSave('🔄 Manual sync initiated');
+            syncInProgress = true;
+            if (showStatus) updateSyncStatus('🔄 Syncing...');
+
+            const userDataRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
+            const userData = {
+                weaningData: weaningData,
+                notes: notes,
+                achievements: achievements,
+                lastSync: new Date().toISOString()
+            };
+
+            window.firebaseSet(userDataRef, userData).then(() => {
+                syncInProgress = false;
+                if (showStatus) {
+                    updateSyncStatus('✅ Synced');
+                    showAutoSave('🔄 Data synced to cloud');
+                }
+            }).catch((error) => {
+                syncInProgress = false;
+                console.error('Sync error:', error);
+                updateSyncStatus('❌ Sync failed');
+            });
         }
 
         function updateSyncStatus(status) {
             document.getElementById('syncStatus').textContent = status;
         }
 
+        function loadLocalData() {
+            // Try to load from localStorage as backup
+            const localData = localStorage.getItem(`weaningData_${currentUser}`);
+            const localNotes = localStorage.getItem(`weaningNotes_${currentUser}`);
+            const localAchievements = localStorage.getItem(`achievements_${currentUser}`);
+            
+            if (localData) weaningData = JSON.parse(localData);
+            if (localNotes) notes = localNotes;
+            if (localAchievements) achievements = JSON.parse(localAchievements);
+        }
+
         // Achievement system
         function checkAchievements() {
             if (!currentUser) return;
 
-            const userData = userAccounts[currentUser];
             let triedFoods = 0;
             let totalAttempts = 0;
             let fiveStarFoods = 0;
@@ -571,8 +599,8 @@
                 });
             });
 
-            achievements.forEach(achievement => {
-                if (userData.achievements.includes(achievement.id)) return;
+            achievementDefinitions.forEach(achievement => {
+                if (achievements.includes(achievement.id)) return;
 
                 let shouldUnlock = false;
                 
@@ -592,13 +620,14 @@
                 }
 
                 if (shouldUnlock) {
-                    userData.achievements.push(achievement.id);
+                    achievements.push(achievement.id);
                     showAchievement(achievement);
                 }
             });
 
-            localStorage.setItem('userAccounts', JSON.stringify(userAccounts));
-            syncToFirebase();
+            // Save achievements locally and sync
+            localStorage.setItem(`achievements_${currentUser}`, JSON.stringify(achievements));
+            syncToFirebase(false);
         }
 
         function showAchievement(achievement) {
@@ -665,6 +694,7 @@
                 mealInput.value = '';
                 renderStages();
                 showAutoSave(`✅ ${mealName} added to ${selectedStage}!`);
+                syncToFirebase(false);
             } else {
                 alert('This meal already exists in the selected stage');
             }
@@ -817,15 +847,1088 @@
             document.getElementById('notesArea').addEventListener('input', function() {
                 notes = this.value;
                 saveData();
-                showAutoSave();
             });
         }
 
         // Data persistence
         function saveData() {
-            saveUserData();
-            syncToFirebase();
+            // Save locally as backup
+            localStorage.setItem(`weaningData_${currentUser}`, JSON.stringify(weaningData));
+            localStorage.setItem(`weaningNotes_${currentUser}`, notes);
+            localStorage.setItem(`achievements_${currentUser}`, JSON.stringify(achievements));
+            
+            // Sync to Firebase
+            syncToFirebase(false);
             showAutoSave();
+        }
+
+        // Auto-save indicator
+        function showAutoSave(customMessage = '✅ Progress Saved!') {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.textContent = customMessage;
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // Export functionality
+        function exportData() {
+            const exportData = {
+                username: currentUser,
+                weaningData: weaningData,
+                notes: notes,
+                achievements: achievements,
+                customStages: weaningStages,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `${currentUser}-weaning-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showAutoSave('📥 Data exported successfully!');
+        }
+
+        // Import functionality
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        function handleImport(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (importedData.weaningData) {
+                            weaningData = importedData.weaningData;
+                        }
+                        if (importedData.notes !== undefined) {
+                            notes = importedData.notes;
+                            document.getElementById('notesArea').value = notes;
+                        }
+                        if (importedData.achievements) {
+                            achievements = importedData.achievements;
+                        }
+                        if (importedData.customStages) {
+                            weaningStages = importedData.customStages;
+                        }
+                        
+                        renderStages();
+                        updateSummary();
+                        saveData();
+                        showAutoSave('📤 Data imported successfully!');
+                        
+                    } catch (error) {
+                        alert('Error importing data. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Reaction modal functionality
+        let currentStage = '';
+        let currentFood = '';
+        let selectedSymptoms = [];
+
+        function showReactionModal(stage, food) {
+            currentStage = stage;
+            currentFood = food;
+            selectedSymptoms = [];
+            
+            document.getElementById('modalFoodName').textContent = `${food} - Reaction Report`;
+            document.getElementById('reactionModal').style.display = 'block';
+            
+            // Clear previous selections
+            document.querySelectorAll('.symptom-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Display reaction history
+            displayReactionHistory(stage, food);
+        }
+
+        function closeReactionModal() {
+            document.getElementById('reactionModal').style.display = 'none';
+            selectedSymptoms = [];
+        }
+
+        // Add symptom selection functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.symptom-btn')) {
+                const symptom = e.target.getAttribute('data-symptom');
+                
+                if (selectedSymptoms.includes(symptom)) {
+                    selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+                    e.target.classList.remove('selected');
+                } else {
+                    selectedSymptoms.push(symptom);
+                    e.target.classList.add('selected');
+                }
+            }
+        });
+
+        function reportReaction() {
+            if (selectedSymptoms.length === 0) {
+                alert('Please select at least one symptom to report.');
+                return;
+            }
+            
+            // Initialize reactions array if it doesn't exist
+            if (!weaningData[currentStage]) {
+                weaningData[currentStage] = {};
+            }
+            if (!weaningData[currentStage][currentFood]) {
+                weaningData[currentStage][currentFood] = {};
+            }
+            if (!weaningData[currentStage][currentFood].reactions) {
+                weaningData[currentStage][currentFood].reactions = [];
+            }
+            
+            // Add new reaction with UK date format (DD/MM/YYYY)
+            const now = new Date();
+            const dateStr = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+            
+            const reaction = {
+                date: dateStr,
+                timestamp: now.toISOString(),
+                symptoms: [...selectedSymptoms]
+            };
+            
+            weaningData[currentStage][currentFood].reactions.push(reaction);
+            
+            // Save data
+            saveData();
+            
+            // Update display
+            displayReactionHistory(currentStage, currentFood);
+            renderStages();
+            
+            // Show success message
+            showAutoSave(`⚠️ Reaction reported for ${currentFood}`);
+            
+            // Clear selections
+            selectedSymptoms = [];
+            document.querySelectorAll('.symptom-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+        }
+
+        function displayReactionHistory(stage, food) {
+            const historyContainer = document.getElementById('reactionHistory');
+            const foodData = weaningData[stage] && weaningData[stage][food];
+            const reactions = foodData && foodData.reactions || [];
+            
+            if (reactions.length === 0) {
+                historyContainer.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No previous reactions reported</p>';
+                return;
+            }
+            
+            const symptomNames = {
+                'rash': 'Skin Rash',
+                'vomiting': 'Vomiting', 
+                'diarrhea': 'Diarrhea',
+                'constipation': 'Constipation',
+                'gassy': 'Gas/Bloating',
+                'fussy': 'Fussiness',
+                'runny_nose': 'Runny Nose',
+                'cough': 'Coughing',
+                'hives': 'Hives',
+                'wheezing': 'Wheezing',
+                'swelling': 'Swelling',
+                'other': 'Other'
+            };
+            
+            historyContainer.innerHTML = `
+                <h4 style="color: #f57c00; margin-bottom: calc(8px + 0.3vw);">Previous Reactions (${reactions.length})</h4>
+                ${reactions.map(reaction => `
+                    <div class="history-item">
+                        <div class="history-date">${reaction.date}</div>
+                        <div class="history-symptoms">
+                            Symptoms: ${reaction.symptoms.map(s => symptomNames[s] || s).join(', ')}
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Close modal<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zachary's Weaning Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #ff9a9e, #fecfef); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 10px; }
+        
+        /* Login Screen */
+        .login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; width: 100%; }
+        .login-container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        .login-container .logo { width: 120px; height: 120px; margin: 0 auto 20px; border-radius: 50%; object-fit: cover; }
+        .login-container h1 { color: #667eea; margin-bottom: 10px; font-size: 2rem; }
+        .login-container p { color: #666; margin-bottom: 30px; }
+        .login-form input { width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 16px; margin-bottom: 15px; }
+        .login-form input:focus { outline: none; border-color: #667eea; }
+        .login-form button { width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; margin-bottom: 15px; }
+        .login-form button:hover { transform: translateY(-2px); }
+        .login-error { color: #e74c3c; margin-top: 15px; font-weight: 500; }
+        
+        /* Main App */
+        .app-container { display: none; width: 100vw; max-width: 100%; min-height: 100vh; background: #f5f7fa; overflow-x: hidden; }
+        .container { width: 100%; max-width: none; margin: 0; background: white; border-radius: 0; box-shadow: none; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; text-align: center; position: relative; }
+        .header .logo { width: calc(15vw + 60px); max-width: 150px; min-width: 80px; height: auto; margin: 0 auto 15px; display: block; border-radius: 10px; }
+        .header h1 { font-size: calc(1.2rem + 1vw); margin-bottom: 8px; }
+        .header p { font-size: calc(0.8rem + 0.5vw); opacity: 0.9; }
+        .user-info { position: absolute; top: 15px; left: 15px; color: white; font-size: calc(0.7rem + 0.3vw); opacity: 0.9; }
+        .logout-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 15px; cursor: pointer; font-size: calc(0.7rem + 0.2vw); }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .sync-status { position: absolute; top: 50px; right: 15px; color: white; font-size: calc(0.6rem + 0.2vw); opacity: 0.8; }
+        
+        .tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+        .tab { flex: 1; padding: calc(10px + 0.5vw); text-align: center; background: none; border: none; cursor: pointer; font-size: calc(0.8rem + 0.3vw); font-weight: bold; color: #6c757d; transition: all 0.3s ease; }
+        .tab.active { color: #667eea; background: white; border-bottom: 3px solid #667eea; }
+        .tab:hover { background: #e9ecef; color: #495057; }
+        
+        .content { padding: calc(15px + 1vw); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(120px + 8vw), 1fr)); gap: calc(15px + 1vw); margin-bottom: calc(20px + 2vw); }
+        .summary-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: calc(20px + 1vw); border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .summary-number { font-size: calc(1.8rem + 1vw); font-weight: bold; margin-bottom: calc(8px + 0.5vw); }
+        .summary-label { font-size: calc(0.8rem + 0.3vw); opacity: 0.9; }
+        
+        .progress-bar { background: #e9ecef; border-radius: 20px; height: calc(25px + 1vw); overflow: hidden; margin: calc(15px + 1vw) 0; position: relative; }
+        .progress-fill { background: linear-gradient(135deg, #28a745, #20c997); height: 100%; transition: width 0.5s ease; border-radius: 20px; }
+        .progress-text { position: absolute; width: 100%; text-align: center; line-height: calc(25px + 1vw); font-weight: bold; color: #495057; font-size: calc(0.8rem + 0.2vw); }
+        
+        .controls { display: flex; gap: calc(8px + 0.5vw); justify-content: center; margin: calc(15px + 1vw) 0; flex-wrap: wrap; }
+        .export-btn, .import-btn { background: #007bff; color: white; border: none; padding: calc(8px + 0.5vw) calc(15px + 1vw); border-radius: 25px; cursor: pointer; font-weight: bold; font-size: calc(0.8rem + 0.2vw); transition: all 0.3s ease; }
+        .export-btn:hover, .import-btn:hover { background: #0056b3; transform: translateY(-2px); }
+        
+        /* Achievement Popup */
+        .achievement-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: calc(25px + 1vw); border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 2000; text-align: center; min-width: calc(250px + 5vw); display: none; animation: achievementBounce 0.5s ease; }
+        .achievement-popup h3 { font-size: calc(1.3rem + 0.5vw); margin-bottom: calc(10px + 0.5vw); }
+        .achievement-popup p { font-size: calc(0.9rem + 0.3vw); margin-bottom: calc(15px + 1vw); }
+        .achievement-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: calc(8px + 0.5vw) calc(15px + 1vw); border-radius: 15px; cursor: pointer; font-weight: bold; font-size: calc(0.8rem + 0.2vw); }
+        
+        @keyframes achievementBounce { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } 50% { transform: translate(-50%, -50%) scale(1.05); } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        
+        .stage { margin-bottom: calc(20px + 1vw); border-radius: 15px; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .stage-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: calc(15px + 1vw); cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
+        .stage-header:hover { background: linear-gradient(135deg, #5a67d8, #6b46c1); }
+        .stage-header h3 { font-size: calc(1.1rem + 0.3vw); }
+        .stage-progress { font-size: calc(0.8rem + 0.2vw); opacity: 0.9; }
+        .stage-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(250px + 8vw), 1fr)); gap: calc(15px + 1vw); padding: calc(20px + 1vw); background: #f8f9fa; }
+        
+        .food-item { background: white; padding: calc(15px + 1vw); border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; }
+        .food-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .food-name { font-weight: bold; font-size: calc(0.9rem + 0.3vw); margin-bottom: calc(12px + 0.5vw); color: #495057; }
+        .food-controls { display: flex; flex-direction: column; gap: calc(8px + 0.5vw); }
+        .tried-container { display: flex; align-items: center; gap: calc(8px + 0.3vw); }
+        .tried-checkbox { width: calc(16px + 0.5vw); height: calc(16px + 0.5vw); cursor: pointer; }
+        .counter-container { display: flex; align-items: center; gap: calc(8px + 0.3vw); }
+        .counter-btn { background: #667eea; color: white; border: none; width: calc(30px + 1vw); height: calc(30px + 1vw); border-radius: 50%; cursor: pointer; font-size: calc(1rem + 0.3vw); font-weight: bold; transition: all 0.3s ease; }
+        .counter-btn:hover { background: #5a67d8; transform: scale(1.1); }
+        .counter-display { font-size: calc(1rem + 0.3vw); font-weight: bold; color: #495057; min-width: calc(25px + 0.5vw); text-align: center; }
+        .rating-container { display: flex; gap: calc(3px + 0.2vw); align-items: center; }
+        .star { font-size: calc(1.2rem + 0.3vw); cursor: pointer; transition: all 0.3s ease; filter: grayscale(100%); }
+        .star.filled { filter: none; }
+        .star:hover { transform: scale(1.2); }
+        
+        .reaction-btn { background: linear-gradient(135deg, #ffa726, #ffcc02); color: white; border: none; padding: calc(6px + 0.3vw) calc(10px + 0.5vw); border-radius: 20px; cursor: pointer; font-size: calc(0.7rem + 0.2vw); font-weight: bold; transition: all 0.3s ease; margin-top: calc(8px + 0.3vw); }
+        .reaction-btn:hover { background: linear-gradient(135deg, #ff9800, #ffc107); transform: translateY(-1px); }
+        .reaction-btn.has-reactions { background: linear-gradient(135deg, #ff7043, #f4511e); }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 5% auto; padding: 0; border-radius: 15px; max-width: calc(400px + 10vw); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-header { background: linear-gradient(135deg, #ffa726, #ffcc02); color: white; padding: calc(15px + 1vw); border-radius: 15px 15px 0 0; text-align: center; }
+        .modal-body { padding: calc(15px + 1vw); }
+        .close { color: white; float: right; font-size: calc(20px + 1vw); font-weight: bold; cursor: pointer; }
+        .close:hover { opacity: 0.7; }
+        
+        .symptom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(100px + 3vw), 1fr)); gap: calc(8px + 0.3vw); margin: calc(12px + 0.5vw) 0; }
+        .symptom-btn { padding: calc(8px + 0.5vw); border: 2px solid #e9ecef; background: white; border-radius: 10px; cursor: pointer; text-align: center; font-size: calc(0.7rem + 0.2vw); transition: all 0.3s ease; }
+        .symptom-btn:hover { background: #f8f9fa; }
+        .symptom-btn.selected { background: #fff3e0; border-color: #ff9800; color: #f57c00; }
+        
+        .reaction-history { margin-top: calc(15px + 1vw); max-height: calc(150px + 5vw); overflow-y: auto; }
+        .history-item { background: #fff3e0; border-left: 4px solid #ff9800; padding: calc(8px + 0.5vw); margin-bottom: calc(6px + 0.3vw); border-radius: 5px; font-size: calc(0.7rem + 0.2vw); }
+        .history-date { font-weight: bold; color: #f57c00; }
+        .history-symptoms { color: #666; margin-top: calc(3px + 0.2vw); }
+        
+        .report-btn { background: linear-gradient(135deg, #ffa726, #ffcc02); color: white; border: none; padding: calc(8px + 0.5vw) calc(15px + 1vw); border-radius: 25px; cursor: pointer; font-weight: bold; margin: calc(8px + 0.3vw) calc(4px + 0.2vw); font-size: calc(0.8rem + 0.2vw); }
+        .report-btn:hover { background: linear-gradient(135deg, #ff9800, #ffc107); }
+        
+        .notes-section { background: white; padding: calc(15px + 1vw); margin-top: calc(25px + 1vw); border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .notes-section h3 { color: #495057; margin-bottom: calc(12px + 0.5vw); font-size: calc(1rem + 0.3vw); }
+        .notes-textarea { width: 100%; height: calc(80px + 3vw); border: 2px solid #e9ecef; border-radius: 10px; padding: calc(12px + 0.5vw); font-family: inherit; resize: vertical; font-size: calc(0.8rem + 0.2vw); }
+        .notes-textarea:focus { outline: none; border-color: #667eea; }
+        
+        .auto-save-indicator { position: fixed; bottom: calc(15px + 1vw); right: calc(15px + 1vw); background: #28a745; color: white; padding: calc(8px + 0.5vw) calc(12px + 0.8vw); border-radius: 20px; font-size: calc(0.7rem + 0.2vw); opacity: 0; transition: opacity 0.3s ease; z-index: 100; }
+        .auto-save-indicator.show { opacity: 1; }
+        
+        .add-meal-section { background: white; padding: calc(25px + 2vw); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: calc(15px + 1vw) 0; }
+        .add-meal-section h3 { color: #495057; margin-bottom: calc(20px + 1vw); font-size: calc(1.2rem + 0.4vw); text-align: center; }
+        .stage-selector { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(150px + 5vw), 1fr)); gap: calc(12px + 0.5vw); margin-bottom: calc(20px + 1vw); }
+        .stage-option { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px solid #dee2e6; border-radius: 12px; padding: calc(12px + 0.8vw); text-align: center; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: calc(0.8rem + 0.2vw); }
+        .stage-option:hover { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); transform: translateY(-2px); }
+        .stage-option.selected { background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%); color: white; transform: translateY(-2px); border: 2px solid #ff4757; }
+        
+        .meal-input-section { display: flex; gap: calc(12px + 0.8vw); align-items: center; margin-bottom: calc(15px + 1vw); }
+        .meal-input { flex: 1; padding: calc(10px + 0.8vw) calc(15px + 1vw); border: 2px solid #dee2e6; border-radius: 25px; font-size: calc(0.9rem + 0.2vw); transition: all 0.3s ease; background: white; }
+        .meal-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .add-meal-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: calc(10px + 0.8vw) calc(20px + 1.5vw); border-radius: 25px; font-size: calc(0.9rem + 0.2vw); font-weight: 600; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
+        .add-meal-btn:hover:not(:disabled) { background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%); transform: translateY(-2px); }
+        .add-meal-btn:disabled { background: #6c757d; cursor: not-allowed; opacity: 0.6; }
+        
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            .user-info, .logout-btn, .sync-status { position: static; display: inline-block; margin: 5px; font-size: 0.8rem; }
+            .header { text-align: center; padding: 15px; }
+            .stage-content { grid-template-columns: 1fr; }
+            .meal-input-section { flex-direction: column; align-items: stretch; }
+            .add-meal-btn { width: 100%; margin-top: calc(8px + 0.5vw); }
+            .modal-content { margin: 10% 5%; max-width: 90%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <img src="this.png" alt="Logo" class="logo" onerror="this.style.display='none';">
+            <h1>🍼 Weaning Tracker</h1>
+            <p>Track your little one's food journey</p>
+            <div class="login-form">
+                <input type="text" id="usernameInput" placeholder="Username" />
+                <input type="password" id="passwordInput" placeholder="Password" />
+                <button id="loginBtn">Login</button>
+                <button id="registerBtn" type="button">Create Account</button>
+                <div id="loginError" class="login-error"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="app-container">
+        <div class="container">
+            <div class="header">
+                <div class="user-info" id="userInfo">Welcome!</div>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+                <div class="sync-status" id="syncStatus">🔄 Connecting...</div>
+                <img src="this.png" alt="Logo" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <h1 id="headerTitle" style="display: none;">🍼 Weaning Journey</h1>
+                <p>Track every taste, every try, every triumph!</p>
+            </div>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
+                <button class="tab" onclick="switchTab('stages')">📅 Stages</button>
+                <button class="tab" onclick="switchTab('addMeal')">➕ Add Meal</button>
+            </div>
+            <div class="content">
+                <div id="summary" class="tab-content active">
+                    <div class="summary-grid">
+                        <div class="summary-card"><div class="summary-number" id="totalTried">0</div><div class="summary-label">Foods Tried</div></div>
+                        <div class="summary-card"><div class="summary-number" id="totalAttempts">0</div><div class="summary-label">Total Attempts</div></div>
+                        <div class="summary-card"><div class="summary-number" id="avgRating">0</div><div class="summary-label">Average Rating</div></div>
+                        <div class="summary-card"><div class="summary-number" id="favoriteFoods">0</div><div class="summary-label">5-Star Foods</div></div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressBar"></div><div class="progress-text" id="progressText">0% Complete</div></div>
+                    <div class="controls">
+                        <button class="export-btn" onclick="exportData()">📥 Export Data</button>
+                        <button class="import-btn" onclick="importData()">📤 Import Data</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(this)">
+                    </div>
+                    <div class="notes-section"><h3>📝 Notes</h3><textarea class="notes-textarea" id="notesArea" placeholder="Add any notes about the weaning journey..."></textarea></div>
+                </div>
+                <div id="stages" class="tab-content"><div id="stagesContainer"></div></div>
+                <div id="addMeal" class="tab-content">
+                    <div class="add-meal-section">
+                        <h3>🍽️ Add New Meal</h3>
+                        <div class="stage-selector" id="stageSelector"></div>
+                        <div class="meal-input-section">
+                            <input type="text" id="mealInput" class="meal-input" placeholder="Enter food name (e.g., carrots, apple puree)">
+                            <button class="add-meal-btn" id="addMealBtn" onclick="addNewMeal()">Add Meal</button>
+                        </div>
+                        <p style="text-align: center; color: #666; font-size: calc(0.7rem + 0.2vw); margin-top: calc(8px + 0.3vw);">Select a stage above, then add foods specific to that weaning stage</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Popup -->
+    <div id="achievementPopup" class="achievement-popup">
+        <h3 id="achievementTitle">🏆 Achievement Unlocked!</h3>
+        <p id="achievementDescription">Great job!</p>
+        <button class="achievement-btn" onclick="closeAchievement()">Awesome!</button>
+    </div>
+
+    <!-- Auto-save indicator -->
+    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Progress Saved!</div>
+
+    <!-- Reaction Modal -->
+    <div id="reactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close" onclick="closeReactionModal()">&times;</span>
+                <h2 id="modalFoodName">Food Reaction Report</h2>
+                <p>Track any reactions or symptoms</p>
+            </div>
+            <div class="modal-body">
+                <div class="symptom-grid">
+                    <div class="symptom-btn" data-symptom="rash">Skin Rash</div>
+                    <div class="symptom-btn" data-symptom="vomiting">Vomiting</div>
+                    <div class="symptom-btn" data-symptom="diarrhea">Diarrhea</div>
+                    <div class="symptom-btn" data-symptom="constipation">Constipation</div>
+                    <div class="symptom-btn" data-symptom="gassy">Gas/Bloating</div>
+                    <div class="symptom-btn" data-symptom="fussy">Fussiness</div>
+                    <div class="symptom-btn" data-symptom="runny_nose">Runny Nose</div>
+                    <div class="symptom-btn" data-symptom="cough">Coughing</div>
+                    <div class="symptom-btn" data-symptom="hives">Hives</div>
+                    <div class="symptom-btn" data-symptom="wheezing">Wheezing</div>
+                    <div class="symptom-btn" data-symptom="swelling">Swelling</div>
+                    <div class="symptom-btn" data-symptom="other">Other</div>
+                </div>
+                <div style="text-align: center; margin: calc(15px + 1vw) 0;">
+                    <button class="report-btn" onclick="reportReaction()">Report Selected Symptoms</button>
+                    <button class="report-btn" style="background: #6c757d;" onclick="closeReactionModal()">Cancel</button>
+                </div>
+                <div class="reaction-history" id="reactionHistory">
+                    <!-- Previous reactions will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, push, off } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVQZ9uJlwkqkHzHHJRhBz_Qc_x9rLq4v0",
+            authDomain: "zachary-weaning.firebaseapp.com",
+            databaseURL: "https://zachary-weaning-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "zachary-weaning",
+            storageBucket: "zachary-weaning.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456789"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+        window.firebaseOnValue = onValue;
+        window.firebaseOff = off;
+
+        // Initialize app after Firebase is ready
+        document.dispatchEvent(new CustomEvent('firebaseReady'));
+    </script>
+
+    <script>
+        // Firebase and sync variables
+        let firebaseReady = false;
+        let syncInProgress = false;
+        let firebaseListener = null;
+
+        // Wait for Firebase to be ready
+        document.addEventListener('firebaseReady', function() {
+            firebaseReady = true;
+            if (currentUser) {
+                setupRealTimeSync();
+            }
+        });
+
+        // User authentication system
+        let currentUser = null;
+
+        // Weaning stages data
+        let weaningStages = {
+            "4-6 months": ["Baby rice cereal", "Sweet potato puree", "Carrot puree", "Apple puree", "Pear puree", "Banana mash", "Avocado"],
+            "6-8 months": ["Broccoli puree", "Pea puree", "Chicken puree", "Beef puree", "Butternut squash", "Yogurt", "Oatmeal"],
+            "8-10 months": ["Finger foods", "Soft pasta", "Cheese cubes", "Cucumber sticks", "Toast fingers", "Scrambled egg", "Fish flakes"],
+            "10+ months": ["Family meals", "Berries", "Nuts (ground)", "Whole grapes (halved)", "Meat pieces", "Raw vegetables", "Spices"]
+        };
+
+        // Current user data
+        let weaningData = {};
+        let notes = '';
+        let selectedStage = '';
+        let achievements = [];
+
+        // Achievement definitions
+        const achievementDefinitions = [
+            { id: 'first_food', name: 'First Taste', description: 'Tried your first food!', icon: '🥄', trigger: 'tried', count: 1 },
+            { id: 'five_foods', name: 'Foodie Explorer', description: 'Tried 5 different foods!', icon: '🌟', trigger: 'tried', count: 5 },
+            { id: 'ten_foods', name: 'Taste Adventurer', description: 'Tried 10 different foods!', icon: '🎯', trigger: 'tried', count: 10 },
+            { id: 'twenty_foods', name: 'Food Champion', description: 'Tried 20 different foods!', icon: '🏆', trigger: 'tried', count: 20 },
+            { id: 'five_stars', name: 'Flavor Lover', description: 'Found 5 favorite foods!', icon: '⭐', trigger: 'fivestar', count: 5 },
+            { id: 'persistent', name: 'Keep Trying', description: 'Made 50 total attempts!', icon: '💪', trigger: 'attempts', count: 50 },
+            { id: 'dedicated', name: 'Dedicated Eater', description: 'Made 100 total attempts!', icon: '🔥', trigger: 'attempts', count: 100 },
+            { id: 'same_food', name: 'Consistency King', description: 'Ate the same food 5 times!', icon: '👑', trigger: 'same_food', count: 5 }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            checkAutoLogin();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('registerBtn').addEventListener('click', handleRegister);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            
+            document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') document.getElementById('passwordInput').focus();
+            });
+            
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleLogin();
+            });
+        }
+
+        function checkAutoLogin() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                showMainApp();
+                if (firebaseReady) {
+                    setupRealTimeSync();
+                }
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!username || !password) {
+                errorDiv.textContent = 'Please enter both username and password';
+                return;
+            }
+
+            // Check default account first
+            if (username === 'Zachary' && password === 'Holderness1') {
+                currentUser = username;
+                localStorage.setItem('currentUser', username);
+                showMainApp();
+                errorDiv.textContent = '';
+                
+                if (firebaseReady) {
+                    setupRealTimeSync();
+                }
+                return;
+            }
+
+            // Check if account exists in Firebase
+            if (firebaseReady) {
+                updateSyncStatus('🔍 Verifying account...');
+                const userRef = window.firebaseRef(window.firebaseDB, `accounts/${username}`);
+                window.firebaseGet(userRef).then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData && userData.password === password) {
+                        currentUser = username;
+                        localStorage.setItem('currentUser', username);
+                        showMainApp();
+                        errorDiv.textContent = '';
+                        setupRealTimeSync();
+                    } else {
+                        errorDiv.textContent = 'Invalid username or password';
+                    }
+                }).catch(() => {
+                    errorDiv.textContent = 'Login error. Please try again.';
+                });
+            } else {
+                errorDiv.textContent = 'Connecting to server...';
+            }
+        }
+
+        function handleRegister() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!username || !password) {
+                errorDiv.textContent = 'Please enter both username and password';
+                return;
+            }
+
+            if (!firebaseReady) {
+                errorDiv.textContent = 'Please wait, connecting to server...';
+                return;
+            }
+
+            updateSyncStatus('📝 Creating account...');
+
+            // Check if username exists
+            const accountRef = window.firebaseRef(window.firebaseDB, `accounts/${username}`);
+            window.firebaseGet(accountRef).then((snapshot) => {
+                if (snapshot.val()) {
+                    errorDiv.textContent = 'Username already exists';
+                    updateSyncStatus('❌ Username taken');
+                    return;
+                }
+
+                // Create new account
+                const newAccount = {
+                    password: password,
+                    childName: username,
+                    created: new Date().toISOString()
+                };
+
+                window.firebaseSet(accountRef, newAccount).then(() => {
+                    currentUser = username;
+                    localStorage.setItem('currentUser', username);
+                    showMainApp();
+                    showAutoSave(`Welcome ${username}! Account created successfully! 🎉`);
+                    setupRealTimeSync();
+                }).catch(() => {
+                    errorDiv.textContent = 'Failed to create account. Please try again.';
+                    updateSyncStatus('❌ Account creation failed');
+                });
+            });
+        }
+
+        function handleLogout() {
+            if (firebaseListener) {
+                window.firebaseOff(firebaseListener);
+                firebaseListener = null;
+            }
+            
+            currentUser = null;
+            weaningData = {};
+            notes = '';
+            achievements = [];
+            localStorage.removeItem('currentUser');
+            showLoginScreen();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('usernameInput').focus();
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            
+            // Update UI
+            document.getElementById('userInfo').textContent = `Welcome, ${currentUser}!`;
+            document.getElementById('headerTitle').textContent = `🍼 ${currentUser}'s Weaning Journey`;
+            document.getElementById('notesArea').placeholder = `Add any notes about ${currentUser}'s weaning journey...`;
+            
+            // Initialize data
+            loadLocalData();
+            renderStageSelector();
+            renderStages();
+            updateSummary();
+            loadNotes();
+        }
+
+        // Firebase real-time sync functions
+        function setupRealTimeSync() {
+            if (!firebaseReady || !currentUser) return;
+
+            updateSyncStatus('🔄 Connecting...');
+
+            // Remove any existing listener
+            if (firebaseListener) {
+                window.firebaseOff(firebaseListener);
+            }
+
+            // Set up real-time listener for user data
+            const userDataRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
+            
+            firebaseListener = window.firebaseOnValue(userDataRef, (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data && !syncInProgress) {
+                    // Update local data with remote data
+                    if (data.weaningData) {
+                        weaningData = data.weaningData;
+                    }
+                    if (data.notes !== undefined) {
+                        notes = data.notes;
+                        document.getElementById('notesArea').value = notes;
+                    }
+                    if (data.achievements) {
+                        achievements = data.achievements;
+                    }
+                    
+                    // Re-render everything with new data
+                    renderStages();
+                    updateSummary();
+                    updateSyncStatus('✅ Synced');
+                } else if (!data) {
+                    // No remote data exists, sync local to remote
+                    syncToFirebase(false);
+                } else {
+                    updateSyncStatus('✅ Synced');
+                }
+            }, (error) => {
+                console.error('Firebase sync error:', error);
+                updateSyncStatus('❌ Sync error');
+            });
+        }
+
+        function syncToFirebase(showStatus = true) {
+            if (!firebaseReady || !currentUser) return;
+
+            syncInProgress = true;
+            if (showStatus) updateSyncStatus('🔄 Syncing...');
+
+            const userDataRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
+            const userData = {
+                weaningData: weaningData,
+                notes: notes,
+                achievements: achievements,
+                lastSync: new Date().toISOString()
+            };
+
+            window.firebaseSet(userDataRef, userData).then(() => {
+                syncInProgress = false;
+                if (showStatus) {
+                    updateSyncStatus('✅ Synced');
+                    showAutoSave('🔄 Data synced to cloud');
+                }
+            }).catch((error) => {
+                syncInProgress = false;
+                console.error('Sync error:', error);
+                updateSyncStatus('❌ Sync failed');
+            });
+        }
+
+        function updateSyncStatus(status) {
+            document.getElementById('syncStatus').textContent = status;
+        }
+
+        function loadLocalData() {
+            // Try to load from localStorage as backup
+            const localData = localStorage.getItem(`weaningData_${currentUser}`);
+            const localNotes = localStorage.getItem(`weaningNotes_${currentUser}`);
+            const localAchievements = localStorage.getItem(`achievements_${currentUser}`);
+            
+            if (localData) weaningData = JSON.parse(localData);
+            if (localNotes) notes = localNotes;
+            if (localAchievements) achievements = JSON.parse(localAchievements);
+        }
+
+        // Achievement system
+        function checkAchievements() {
+            if (!currentUser) return;
+
+            let triedFoods = 0;
+            let totalAttempts = 0;
+            let fiveStarFoods = 0;
+            let maxSameFood = 0;
+
+            Object.entries(weaningStages).forEach(([stage, foods]) => {
+                foods.forEach(food => {
+                    const foodData = weaningData[stage] && weaningData[stage][food] || {};
+                    
+                    if (foodData.tried) triedFoods++;
+                    if (foodData.attempts) {
+                        totalAttempts += foodData.attempts;
+                        maxSameFood = Math.max(maxSameFood, foodData.attempts);
+                    }
+                    if (foodData.rating === 5) fiveStarFoods++;
+                });
+            });
+
+            achievementDefinitions.forEach(achievement => {
+                if (achievements.includes(achievement.id)) return;
+
+                let shouldUnlock = false;
+                
+                switch (achievement.trigger) {
+                    case 'tried':
+                        shouldUnlock = triedFoods >= achievement.count;
+                        break;
+                    case 'fivestar':
+                        shouldUnlock = fiveStarFoods >= achievement.count;
+                        break;
+                    case 'attempts':
+                        shouldUnlock = totalAttempts >= achievement.count;
+                        break;
+                    case 'same_food':
+                        shouldUnlock = maxSameFood >= achievement.count;
+                        break;
+                }
+
+                if (shouldUnlock) {
+                    achievements.push(achievement.id);
+                    showAchievement(achievement);
+                }
+            });
+
+            // Save achievements locally and sync
+            localStorage.setItem(`achievements_${currentUser}`, JSON.stringify(achievements));
+            syncToFirebase(false);
+        }
+
+        function showAchievement(achievement) {
+            const popup = document.getElementById('achievementPopup');
+            document.getElementById('achievementTitle').textContent = `${achievement.icon} ${achievement.name}`;
+            document.getElementById('achievementDescription').textContent = achievement.description;
+            popup.style.display = 'block';
+
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                closeAchievement();
+            }, 5000);
+        }
+
+        function closeAchievement() {
+            document.getElementById('achievementPopup').style.display = 'none';
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Stage selector for add meal
+        function renderStageSelector() {
+            const container = document.getElementById('stageSelector');
+            container.innerHTML = Object.keys(weaningStages).map(stage => 
+                `<div class="stage-option" data-stage="${stage}" onclick="selectStage('${stage}')">${stage}</div>`
+            ).join('');
+        }
+
+        function selectStage(stage) {
+            selectedStage = stage;
+            document.querySelectorAll('.stage-option').forEach(option => option.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('addMealBtn').disabled = false;
+        }
+
+        // Add new meal
+        function addNewMeal() {
+            const mealInput = document.getElementById('mealInput');
+            const mealName = mealInput.value.trim();
+            
+            if (!selectedStage) {
+                alert('Please select a stage first');
+                return;
+            }
+            
+            if (!mealName) {
+                alert('Please enter a meal name');
+                return;
+            }
+            
+            if (!weaningStages[selectedStage]) {
+                weaningStages[selectedStage] = [];
+            }
+            
+            if (!weaningStages[selectedStage].includes(mealName)) {
+                weaningStages[selectedStage].push(mealName);
+                mealInput.value = '';
+                renderStages();
+                showAutoSave(`✅ ${mealName} added to ${selectedStage}!`);
+                syncToFirebase(false);
+            } else {
+                alert('This meal already exists in the selected stage');
+            }
+        }
+
+        // Render stages
+        function renderStages() {
+            const container = document.getElementById('stagesContainer');
+            container.innerHTML = Object.entries(weaningStages).map(([stageName, foods]) => {
+                const stageData = weaningData[stageName] || {};
+                const triedCount = foods.filter(food => stageData[food] && stageData[food].tried).length;
+                
+                return `
+                    <div class="stage">
+                        <div class="stage-header" onclick="toggleStage('${stageName}')">
+                            <h3>${stageName}</h3>
+                            <div class="stage-progress">${triedCount}/${foods.length} foods tried</div>
+                        </div>
+                        <div class="stage-content" id="stage-${stageName}">
+                            ${foods.map(food => renderFoodItem(stageName, food)).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleStage(stageName) {
+            const content = document.getElementById(`stage-${stageName}`);
+            content.style.display = content.style.display === 'none' ? 'grid' : 'none';
+        }
+
+        function renderFoodItem(stageName, foodName) {
+            const foodData = weaningData[stageName] && weaningData[stageName][foodName] || {};
+            
+            return `
+                <div class="food-item">
+                    <div class="food-name">${foodName}</div>
+                    <div class="food-controls">
+                        <div class="tried-container">
+                            <input type="checkbox" class="tried-checkbox" ${foodData.tried ? 'checked' : ''} 
+                                   data-stage="${stageName}" data-food="${foodName}">
+                            <label>Tried it</label>
+                        </div>
+                        <div class="counter-container">
+                            <button class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="decrease">-</button>
+                            <span class="counter-display">${foodData.attempts || 0}</span>
+                            <button class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="increase">+</button>
+                            <label>attempts</label>
+                        </div>
+                        <div class="rating-container">
+                            ${[1,2,3,4,5].map(rating => 
+                                `<span class="star ${foodData.rating >= rating ? 'filled' : ''}" 
+                                       data-stage="${stageName}" data-food="${foodName}" data-rating="${rating}">⭐</span>`
+                            ).join('')}
+                        </div>
+                        <button class="reaction-btn ${foodData.reactions && foodData.reactions.length > 0 ? 'has-reactions' : ''}" 
+                                onclick="showReactionModal('${stageName}', '${foodName}')">
+                            ${foodData.reactions && foodData.reactions.length > 0 ? `⚠️ View Reactions (${foodData.reactions.length})` : '⚠️ Report Reaction'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event delegation for food controls
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.tried-checkbox')) {
+                const { stage, food } = e.target.dataset;
+                updateFoodData(stage, food, 'tried', e.target.checked);
+                updateSummary();
+                saveData();
+                checkAchievements();
+            }
+            
+            if (e.target.matches('.counter-btn')) {
+                e.stopPropagation();
+                const { stage, food, action } = e.target.dataset;
+                                const currentAttempts = weaningData[stage] && weaningData[stage][food] && weaningData[stage][food].attempts || 0;
+                const newAttempts = action === 'increase' ? currentAttempts + 1 : Math.max(0, currentAttempts - 1);
+                updateFoodData(stage, food, 'attempts', newAttempts);
+                
+                const display = e.target.parentNode.querySelector('.counter-display');
+                display.textContent = newAttempts;
+                updateSummary();
+                saveData();
+                checkAchievements();
+            }
+            
+            if (e.target.matches('.star')) {
+                const { stage, food, rating } = e.target.dataset;
+                updateFoodData(stage, food, 'rating', parseInt(rating));
+                
+                // Update star display
+                const stars = e.target.parentNode.querySelectorAll('.star');
+                stars.forEach((star, index) => {
+                    star.classList.toggle('filled', index < rating);
+                });
+                
+                updateSummary();
+                saveData();
+                checkAchievements();
+            }
+        });
+
+        function updateFoodData(stage, food, property, value) {
+            if (!weaningData[stage]) weaningData[stage] = {};
+            if (!weaningData[stage][food]) weaningData[stage][food] = {};
+            weaningData[stage][food][property] = value;
+        }
+
+        // Summary calculations
+        function updateSummary() {
+            let totalFoods = 0;
+            let triedFoods = 0;
+            let totalAttempts = 0;
+            let totalRatings = 0;
+            let ratedFoods = 0;
+            let fiveStarFoods = 0;
+
+            Object.entries(weaningStages).forEach(([stage, foods]) => {
+                totalFoods += foods.length;
+                
+                foods.forEach(food => {
+                    const foodData = weaningData[stage] && weaningData[stage][food] || {};
+                    
+                    if (foodData.tried) triedFoods++;
+                    if (foodData.attempts) totalAttempts += foodData.attempts;
+                    if (foodData.rating) {
+                        totalRatings += foodData.rating;
+                        ratedFoods++;
+                        if (foodData.rating === 5) fiveStarFoods++;
+                    }
+                });
+            });
+
+            document.getElementById('totalTried').textContent = triedFoods;
+            document.getElementById('totalAttempts').textContent = totalAttempts;
+            document.getElementById('avgRating').textContent = ratedFoods > 0 ? (totalRatings / ratedFoods).toFixed(1) : '0';
+            document.getElementById('favoriteFoods').textContent = fiveStarFoods;
+
+            // Update progress bar
+            const progressPercent = totalFoods > 0 ? (triedFoods / totalFoods * 100) : 0;
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+
+        // Notes functionality
+        function loadNotes() {
+            document.getElementById('notesArea').value = notes;
+            document.getElementById('notesArea').addEventListener('input', function() {
+                notes = this.value;
+                saveData();
+                showAutoSave();
+            });
+        }
+
+        // Data persistence with automatic Firebase sync
+        function saveData() {
+            saveUserData();
+            if (firebaseReady && currentUser) {
+                const userRef = window.firebaseRef(window.firebaseDB, `users/${currentUser}`);
+                const userData = userAccounts[currentUser];
+                
+                window.firebaseSet(userRef, {
+                    weaningData: userData.weaningData || {},
+                    notes: userData.notes || '',
+                    achievements: userData.achievements || [],
+                    lastSync: new Date().toISOString()
+                }).catch((error) => {
+                    console.error('Auto-sync error:', error);
+                });
+            }
         }
 
         // Auto-save indicator
@@ -880,7 +1983,7 @@
                         }
                         
                         loadUserData();
-                        syncToFirebase();
+                        saveData();
                         showAutoSave('📤 Data imported successfully!');
                         
                     } catch (error) {
