@@ -40,9 +40,9 @@
         .stage-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 25px; background: #f8f9fa; }
         .food-item { background: white; padding: 20px; border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; position: relative; }
         .food-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .food-item.allergy-flagged { border-color: #dc3545; background: #fff5f5; }
+        .food-item.allergy-flagged { border-color: #ffc107; background: #fffbf0; }
         .food-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; color: #495057; }
-        .allergy-flag { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; }
+        .allergy-flag { position: absolute; top: 10px; right: 10px; background: #ffc107; color: #212529; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; }
         .food-controls { display: flex; flex-direction: column; gap: 10px; }
         .tried-container { display: flex; align-items: center; gap: 10px; }
         .tried-checkbox { width: 20px; height: 20px; cursor: pointer; }
@@ -54,8 +54,8 @@
         .star { font-size: 1.5rem; cursor: pointer; transition: all 0.3s ease; filter: grayscale(100%); }
         .star.filled { filter: none; }
         .star:hover { transform: scale(1.2); }
-        .allergy-btn { background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; }
-        .allergy-btn:hover { background: #c82333; }
+        .allergy-btn { background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; }
+        .allergy-btn:hover { background: #e0a800; }
         .notes-section { background: white; padding: 20px; margin-top: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .notes-section h3 { color: #495057; margin-bottom: 15px; }
         .notes-textarea { width: 100%; height: 100px; border: 2px solid #e9ecef; border-radius: 10px; padding: 15px; font-family: inherit; resize: vertical; }
@@ -100,10 +100,10 @@
         .allergy-modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
         .allergy-symptoms { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 20px 0; }
         .symptom-option { background: #f8f9fa; border: 2px solid #dee2e6; padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s ease; }
-        .symptom-option.selected { background: #fff5f5; border-color: #dc3545; color: #dc3545; }
+        .symptom-option.selected { background: #fffbf0; border-color: #ffc107; color: #856404; }
         .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
         .modal-btn { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; }
-        .modal-btn.save { background: #dc3545; color: white; }
+        .modal-btn.save { background: #ffc107; color: #212529; }
         .modal-btn.cancel { background: #6c757d; color: white; }
 
         @media (max-width: 768px) { 
@@ -148,6 +148,10 @@
         <div class="allergy-modal-content">
             <h3>⚠️ Report Allergic Reaction</h3>
             <p>Food: <strong id="allergyFoodName"></strong></p>
+            <div id="allergyHistory" style="display: none; background: #fffbf0; border: 2px solid #ffc107; border-radius: 10px; padding: 15px; margin: 15px 0;">
+                <h4 style="color: #856404; margin-bottom: 10px;">Previous Reactions:</h4>
+                <div id="allergyHistoryList"></div>
+            </div>
             <div class="allergy-symptoms">
                 <div class="symptom-option" data-symptom="rash">Skin rash/hives</div>
                 <div class="symptom-option" data-symptom="swelling">Swelling (face/lips)</div>
@@ -518,10 +522,48 @@
             return Object.values(data).some(item => item.attempts >= count);
         }
 
-        // Allergy System
+        // Allergy System with History and UK Date Format
         window.openAllergyModal = function(stageName, foodName) {
             allergyModalData = { stage: stageName, food: foodName };
             document.getElementById('allergyFoodName').textContent = foodName;
+            
+            // Check for existing allergy history
+            const allergyKey = `${stageName}-${foodName}`;
+            const historyDiv = document.getElementById('allergyHistory');
+            const historyList = document.getElementById('allergyHistoryList');
+            
+            if (allergyData[allergyKey]) {
+                // Convert existing single report to array format for backwards compatibility
+                if (!Array.isArray(allergyData[allergyKey])) {
+                    allergyData[allergyKey] = [allergyData[allergyKey]];
+                }
+                
+                historyDiv.style.display = 'block';
+                historyList.innerHTML = '';
+                
+                allergyData[allergyKey].forEach((reaction, index) => {
+                    const date = new Date(reaction.date);
+                    const ukDate = date.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const historyItem = document.createElement('div');
+                    historyItem.style.cssText = 'margin-bottom: 10px; padding: 8px; background: rgba(255,193,7,0.1); border-radius: 5px; font-size: 0.9rem;';
+                    historyItem.innerHTML = `
+                        <strong>📅 ${ukDate}</strong><br>
+                        <strong>Symptoms:</strong> ${reaction.symptoms.join(', ')}<br>
+                        ${reaction.notes ? `<strong>Notes:</strong> ${reaction.notes}` : ''}
+                    `;
+                    historyList.appendChild(historyItem);
+                });
+            } else {
+                historyDiv.style.display = 'none';
+            }
+            
             document.getElementById('allergyModal').style.display = 'block';
         }
 
@@ -552,11 +594,21 @@
             }
 
             const allergyKey = `${allergyModalData.stage}-${allergyModalData.food}`;
-            allergyData[allergyKey] = {
+            const newReaction = {
                 symptoms: selectedSymptoms,
                 notes: notes,
                 date: new Date().toISOString()
             };
+
+            // Initialize as array or add to existing array
+            if (!allergyData[allergyKey]) {
+                allergyData[allergyKey] = [newReaction];
+            } else if (Array.isArray(allergyData[allergyKey])) {
+                allergyData[allergyKey].push(newReaction);
+            } else {
+                // Convert old single format to array
+                allergyData[allergyKey] = [allergyData[allergyKey], newReaction];
+            }
 
             // Mark food item visually
             const foodId = `${allergyModalData.stage}-${allergyModalData.food}`.replace(/[^a-zA-Z0-9]/g, '');
