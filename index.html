@@ -1,4 +1,3 @@
-$html1 = @'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,6 +69,430 @@ $html1 = @'
         @media (max-width: 768px) { .header h1 { font-size: 1.8rem; } .summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .stage-content { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: center; } .stage-selector { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; } .stage-option { padding: 10px; font-size: 0.9rem; } .meal-input-section { flex-direction: column; align-items: stretch; } .add-meal-btn { width: 100%; margin-top: 10px; } }
     </style>
 </head>
-'@
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍼 Zachary's Weaning Journey</h1>
+            <p>Track every taste, every try, every triumph!</p>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
+            <button class="tab" onclick="switchTab('stages')">📅 Stages</button>
+            <button class="tab" onclick="switchTab('addMeal')">➕ Add Meal</button>
+        </div>
+        <div class="content">
+            <div id="summary" class="tab-content active">
+                <div class="summary-grid">
+                    <div class="summary-card"><div class="summary-number" id="totalTried">0</div><div class="summary-label">Foods Tried</div></div>
+                    <div class="summary-card"><div class="summary-number" id="totalAttempts">0</div><div class="summary-label">Total Attempts</div></div>
+                    <div class="summary-card"><div class="summary-number" id="avgRating">0</div><div class="summary-label">Average Rating</div></div>
+                    <div class="summary-card"><div class="summary-number" id="favoriteFoods">0</div><div class="summary-label">5-Star Foods</div></div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progressBar"></div><div class="progress-text" id="progressText">0% Complete</div></div>
+                <div class="controls">
+                    <button class="export-btn" onclick="exportData()">📥 Export Data</button>
+                    <button class="import-btn" onclick="importData()">📤 Import Data</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(this)">
+                </div>
+                <div class="notes-section"><h3>📝 Notes</h3><textarea class="notes-textarea" id="notesArea" placeholder="Add any notes about Zachary's weaning journey..."></textarea></div>
+            </div>
+            <div id="stages" class="tab-content"><div id="stagesContainer"></div></div>
+            <div id="addMeal" class="tab-content">
+                <div class="add-meal-section">
+                    <h3>Add Custom Meal</h3>
+                    <p style="text-align: center; margin-bottom: 25px; color: #6c757d;">Add a custom food for Zachary and choose which weaning stage it belongs to.</p>
+                    <div class="stage-selector">
+                        <div class="stage-option" data-stage="Week 1-2: First Tastes"><strong>Week 1-2</strong><br>First Tastes</div>
+                        <div class="stage-option" data-stage="Week 3-4: Building Confidence"><strong>Week 3-4</strong><br>Building Confidence</div>
+                        <div class="stage-option" data-stage="Week 5-6: Introducing Lumps"><strong>Week 5-6</strong><br>Introducing Lumps</div>
+                        <div class="stage-option" data-stage="Week 7-10: Variety & Textures"><strong>Week 7-10</strong><br>Variety & Textures</div>
+                        <div class="stage-option" data-stage="Week 11-16: Chopped & Chunkier"><strong>Week 11-16</strong><br>Chopped & Chunkier</div>
+                        <div class="stage-option" data-stage="Month 9-12: Joining Family Meals"><strong>Month 9-12</strong><br>Joining Family Meals</div>
+                    </div>
+                    <div class="meal-input-section">
+                        <input type="text" id="mealName" class="meal-input" placeholder="Enter custom meal name (e.g., 'Homemade applesauce')" maxlength="50">
+                        <button id="addMealBtn" class="add-meal-btn" disabled>Add Meal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Progress Saved!</div>
+    
+    <script>
+        // Weaning stages data (mutable for custom meals)
+        let weaningStages = {
+            "Week 1-2: First Tastes": ["Apple puree", "Banana", "Carrot puree", "Sweet potato", "Pear puree", "Broccoli puree", "Butternut squash", "Avocado", "Baby rice", "Parsnip puree"],
+            "Week 3-4: Building Confidence": ["Cauliflower puree", "Courgette puree", "Mango puree", "Peach puree", "Green beans puree", "Pumpkin puree", "Spinach puree", "Potato puree", "Papaya puree", "Beetroot puree"],
+            "Week 5-6: Introducing Lumps": ["Mashed banana", "Well-cooked pasta shapes", "Soft cooked apple pieces", "Mashed sweet potato with lumps", "Soft steamed broccoli florets", "Mashed avocado with texture", "Soft cooked carrot sticks", "Rice with soft vegetables", "Mashed potato with lumps", "Soft cooked pear pieces"],
+            "Week 7-10: Variety & Textures": ["Scrambled egg", "Soft cooked chicken strips", "Toast fingers", "Cheese cubes", "Soft cooked fish flakes", "Pasta with sauce", "Steamed vegetable sticks", "Soft fruits in pieces", "Rice cakes", "Yogurt", "Well-cooked lentils", "Soft cooked beef strips"],
+            "Week 11-16: Chopped & Chunkier": ["Chopped chicken", "Chopped vegetables", "Harder fruits", "Sandwich pieces", "Mini meatballs", "Chopped hard-boiled egg", "Pasta salad", "Roasted vegetables", "Grated cheese", "Chopped fish", "Bean salads", "Finger foods"],
+            "Month 9-12: Joining Family Meals": ["Family meal portions", "Whole fruits", "Raw vegetables", "Nuts (chopped/ground)", "Whole grains", "Spiced foods", "Mixed textures", "Self-feeding foods", "Cup drinking", "Family snacks", "Complex meals", "Adult portions (smaller)"]
+        };
 
-Set-Content -Path "h:\CodingWork\StoryCharacterTracker\This\zachary-weaning-complete.html" -Value $html1 -Encoding UTF8
+        // Data storage
+        let weaningData = JSON.parse(localStorage.getItem('weaningData') || '{}');
+        let notes = localStorage.getItem('weaningNotes') || '';
+        let selectedStage = null;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStages();
+            updateSummary();
+            loadNotes();
+            setupAddMealTab();
+        });
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Update stages if switching to stages tab
+            if (tabName === 'stages') {
+                renderStages();
+            }
+        }
+
+        // Setup add meal tab functionality
+        function setupAddMealTab() {
+            const stageOptions = document.querySelectorAll('.stage-option');
+            const mealInput = document.getElementById('mealName');
+            const addBtn = document.getElementById('addMealBtn');
+
+            // Stage selection
+            stageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove previous selection
+                    stageOptions.forEach(opt => opt.classList.remove('selected'));
+                    // Add selection to clicked option
+                    this.classList.add('selected');
+                    selectedStage = this.getAttribute('data-stage');
+                    updateAddButton();
+                });
+            });
+
+            // Meal input
+            mealInput.addEventListener('input', updateAddButton);
+            
+            // Add meal button
+            addBtn.addEventListener('click', addCustomMeal);
+        }
+
+        function updateAddButton() {
+            const mealInput = document.getElementById('mealName');
+            const addBtn = document.getElementById('addMealBtn');
+            const isValid = selectedStage && mealInput.value.trim().length > 0;
+            addBtn.disabled = !isValid;
+        }
+
+        function addCustomMeal() {
+            const mealInput = document.getElementById('mealName');
+            const mealName = mealInput.value.trim();
+            
+            if (selectedStage && mealName) {
+                // Add to weaning stages
+                weaningStages[selectedStage].push(mealName);
+                
+                // Clear input
+                mealInput.value = '';
+                
+                // Reset selection
+                document.querySelectorAll('.stage-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                selectedStage = null;
+                updateAddButton();
+                
+                // Show success message
+                showAutoSave(`Added "${mealName}" to ${selectedStage}`);
+                
+                // Re-render stages if on stages tab
+                if (document.getElementById('stages').classList.contains('active')) {
+                    renderStages();
+                }
+            }
+        }
+
+        // Render all stages
+        function renderStages() {
+            const container = document.getElementById('stagesContainer');
+            container.innerHTML = '';
+
+            Object.entries(weaningStages).forEach(([stageName, foods]) => {
+                const stageDiv = document.createElement('div');
+                stageDiv.className = 'stage';
+                
+                const triedCount = foods.filter(food => getFoodData(stageName, food).tried).length;
+                const progressText = `${triedCount}/${foods.length} tried`;
+
+                stageDiv.innerHTML = `
+                    <div class="stage-header" onclick="toggleStage('${stageName}')">
+                        <h3>${stageName}</h3>
+                        <div class="stage-progress">${progressText}</div>
+                    </div>
+                    <div class="stage-content" id="stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}">
+                        ${foods.map(food => createFoodItemHTML(stageName, food)).join('')}
+                    </div>
+                `;
+
+                container.appendChild(stageDiv);
+            });
+        }
+
+        // Toggle stage visibility
+        function toggleStage(stageName) {
+            const stageContent = document.getElementById(`stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}`);
+            stageContent.style.display = stageContent.style.display === 'none' ? 'grid' : 'none';
+        }
+
+        // Create food item HTML
+        function createFoodItemHTML(stageName, foodName) {
+            const foodData = getFoodData(stageName, foodName);
+            const foodId = `${stageName}-${foodName}`.replace(/[^a-zA-Z0-9]/g, '');
+
+            return `
+                <div class="food-item" id="food-${foodId}">
+                    <div class="food-name">${foodName}</div>
+                    <div class="food-controls">
+                        <div class="tried-container">
+                            <input type="checkbox" class="tried-checkbox" 
+                                   data-stage="${stageName}" data-food="${foodName}"
+                                   ${foodData.tried ? 'checked' : ''}>
+                            <label>Tried it</label>
+                        </div>
+                        <div class="counter-container">
+                            <button class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="decrease">-</button>
+                            <span class="counter-display">${foodData.attempts || 0}</span>
+                            <button class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="increase">+</button>
+                            <label>attempts</label>
+                        </div>
+                        <div class="rating-container">
+                            ${[1,2,3,4,5].map(rating => 
+                                `<span class="star ${foodData.rating >= rating ? 'filled' : ''}" 
+                                       data-stage="${stageName}" data-food="${foodName}" data-rating="${rating}">⭐</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event delegation for food controls
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('.tried-checkbox')) {
+                const { stage, food } = e.target.dataset;
+                updateFoodData(stage, food, 'tried', e.target.checked);
+                updateSummary();
+                saveData();
+            }
+            
+            if (e.target.matches('.counter-btn')) {
+                e.stopPropagation();
+                const { stage, food, action } = e.target.dataset;
+                const currentAttempts = getFoodData(stage, food).attempts || 0;
+                const newAttempts = action === 'increase' 
+                    ? currentAttempts + 1 
+                    : Math.max(0, currentAttempts - 1);
+                
+                updateFoodData(stage, food, 'attempts', newAttempts);
+                updateFoodItemDisplay(stage, food);
+                updateSummary();
+                saveData();
+            }
+            
+            if (e.target.matches('.star')) {
+                e.stopPropagation();
+                const { stage, food, rating } = e.target.dataset;
+                updateFoodData(stage, food, 'rating', parseInt(rating));
+                updateFoodItemDisplay(stage, food);
+                updateSummary();
+                saveData();
+            }
+        });
+
+        // Update specific food item display without full re-render
+        function updateFoodItemDisplay(stageName, foodName) {
+            const foodData = getFoodData(stageName, foodName);
+            const foodId = `${stageName}-${foodName}`.replace(/[^a-zA-Z0-9]/g, '');
+            const foodElement = document.getElementById(`food-${foodId}`);
+            
+            if (foodElement) {
+                // Update attempts counter
+                const counterDisplay = foodElement.querySelector('.counter-display');
+                if (counterDisplay) {
+                    counterDisplay.textContent = foodData.attempts || 0;
+                }
+                
+                // Update star rating
+                const stars = foodElement.querySelectorAll('.star');
+                stars.forEach((star, index) => {
+                    const rating = index + 1;
+                    if (foodData.rating >= rating) {
+                        star.classList.add('filled');
+                    } else {
+                        star.classList.remove('filled');
+                    }
+                });
+                
+                // Update checkbox
+                const checkbox = foodElement.querySelector('.tried-checkbox');
+                if (checkbox) {
+                    checkbox.checked = foodData.tried || false;
+                }
+            }
+        }
+
+        // Get food data
+        function getFoodData(stageName, foodName) {
+            const key = `${stageName}-${foodName}`;
+            return weaningData[key] || { tried: false, attempts: 0, rating: 0 };
+        }
+
+        // Update food data
+        function updateFoodData(stageName, foodName, property, value) {
+            const key = `${stageName}-${foodName}`;
+            if (!weaningData[key]) {
+                weaningData[key] = { tried: false, attempts: 0, rating: 0 };
+            }
+            weaningData[key][property] = value;
+        }
+
+        // Update summary statistics
+        function updateSummary() {
+            let totalFoods = 0;
+            let triedFoods = 0;
+            let totalAttempts = 0;
+            let totalRatings = 0;
+            let ratedFoods = 0;
+            let fiveStarFoods = 0;
+
+            Object.entries(weaningStages).forEach(([stageName, foods]) => {
+                foods.forEach(food => {
+                    totalFoods++;
+                    const foodData = getFoodData(stageName, food);
+                    
+                    if (foodData.tried) triedFoods++;
+                    totalAttempts += foodData.attempts || 0;
+                    
+                    if (foodData.rating > 0) {
+                        totalRatings += foodData.rating;
+                        ratedFoods++;
+                        if (foodData.rating === 5) fiveStarFoods++;
+                    }
+                });
+            });
+
+            // Update DOM
+            document.getElementById('totalTried').textContent = triedFoods;
+            document.getElementById('totalAttempts').textContent = totalAttempts;
+            document.getElementById('avgRating').textContent = ratedFoods > 0 ? (totalRatings / ratedFoods).toFixed(1) : '0';
+            document.getElementById('favoriteFoods').textContent = fiveStarFoods;
+
+            // Update progress bar
+            const progressPercent = totalFoods > 0 ? (triedFoods / totalFoods * 100) : 0;
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progressPercent)}% Complete`;
+        }
+
+        // Notes functionality
+        function loadNotes() {
+            document.getElementById('notesArea').value = notes;
+            document.getElementById('notesArea').addEventListener('input', function() {
+                notes = this.value;
+                localStorage.setItem('weaningNotes', notes);
+                showAutoSave();
+            });
+        }
+
+        // Data persistence
+        function saveData() {
+            localStorage.setItem('weaningData', JSON.stringify(weaningData));
+            showAutoSave();
+        }
+
+        // Auto-save indicator
+        function showAutoSave(customMessage = '✅ Progress Saved!') {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.textContent = customMessage;
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // Export functionality
+        function exportData() {
+            const exportData = {
+                weaningData: weaningData,
+                notes: notes,
+                customStages: weaningStages,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `zachary-weaning-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showAutoSave('📥 Data exported successfully!');
+        }
+
+        // Import functionality
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        function handleImport(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (importedData.weaningData) {
+                            weaningData = importedData.weaningData;
+                            localStorage.setItem('weaningData', JSON.stringify(weaningData));
+                        }
+                        
+                        if (importedData.notes) {
+                            notes = importedData.notes;
+                            localStorage.setItem('weaningNotes', notes);
+                            document.getElementById('notesArea').value = notes;
+                        }
+                        
+                        if (importedData.customStages) {
+                            weaningStages = importedData.customStages;
+                        }
+                        
+                        renderStages();
+                        updateSummary();
+                        showAutoSave('📤 Data imported successfully!');
+                        
+                    } catch (error) {
+                        alert('Error importing data. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+    </script>
+</body>
+</html>
