@@ -1,1 +1,687 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zachary's Weaning Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: white;
+            color: #495057;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stage {
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .stage-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stage-header:hover {
+            background: linear-gradient(135deg, #5a6fd8, #6a42a0);
+        }
+
+        .stage-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .stage-progress {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .stage-content {
+            display: none;
+            padding: 0;
+        }
+
+        .stage.expanded .stage-content {
+            display: block;
+        }
+
+        .stage.expanded .stage-header::after {
+            content: "▲";
+        }
+
+        .stage-header::after {
+            content: "▼";
+            font-size: 0.8rem;
+        }
+
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .food-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .food-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .food-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .food-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tried-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tried-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .counter-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .counter-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .counter-btn:hover {
+            background: #5a6fd8;
+            transform: scale(1.1);
+        }
+
+        .counter-display {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .rating-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover {
+            transform: scale(1.2);
+        }
+
+        .star.filled {
+            color: #ffc107;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .summary-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .favorites-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .favorites-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .favorites-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .favorite-item {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #495057;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .food-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .auto-save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .auto-save-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍼 Zachary's Weaning Journey</h1>
+            <p>Track every taste, every try, every triumph!</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
+            <button class="tab" onclick="switchTab('stages')">📅 Stages</button>
+        </div>
+
+        <div class="content">
+            <!-- Summary Tab -->
+            <div id="summary" class="tab-content active">
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-number" id="totalTried">0</div>
+                        <div class="summary-label">Foods Tried</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number" id="totalLoved">0</div>
+                        <div class="summary-label">Foods Loved ⭐⭐⭐⭐⭐</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number" id="avgRating">0</div>
+                        <div class="summary-label">Average Rating</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number" id="totalAttempts">0</div>
+                        <div class="summary-label">Total Attempts</div>
+                    </div>
+                </div>
+
+                <div class="favorites-section">
+                    <div class="favorites-title">🌟 Zachary's Favorites</div>
+                    <div class="favorites-list" id="favoritesList">
+                        <div class="favorite-item">Try some foods first!</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn" onclick="exportData()">📥 Export Progress</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📤 Import Progress</button>
+                    <input type="file" id="importFile" style="display: none" accept=".json" onchange="importData(event)">
+                </div>
+            </div>
+
+            <!-- Stages Tab -->
+            <div id="stages" class="tab-content">
+                <div id="stagesContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Progress Saved!</div>
+
+    <script>
+        // Food data organized by stages
+        const weaningStages = {
+            "Week 1-2: First Tastes": [
+                "Baby rice cereal", "Sweet potato purée", "Carrot purée", "Apple purée",
+                "Pear purée", "Banana mash", "Avocado mash", "Butternut squash purée"
+            ],
+            "Week 3-4: Building Confidence": [
+                "Parsnip purée", "Broccoli purée", "Cauliflower purée", "Green bean purée",
+                "Peas purée", "Baby oatmeal", "Iron-fortified cereal", "Peach purée",
+                "Plum purée", "Mango purée"
+            ],
+            "Week 5-6: Introducing Lumps": [
+                "Mashed banana with lumps", "Soft cooked pasta", "Toast fingers",
+                "Cheese cubes", "Yogurt", "Scrambled egg", "Soft pear pieces",
+                "Cucumber sticks", "Cooked carrot sticks"
+            ],
+            "Week 7-10: Variety & Textures": [
+                "Mixed vegetable mash", "Chicken purée", "Beef mince", "Fish flakes",
+                "Lentil purée", "Hummus", "Bread with spread", "Berry mash",
+                "Citrus fruits", "Peanut butter (smooth)", "Tree nuts (ground)"
+            ],
+            "Week 11-16: Chopped & Chunkier": [
+                "Chopped vegetables", "Mini meatballs", "Pasta shapes", "Rice dishes",
+                "Soft fruits chopped", "Crackers", "Mini sandwiches", "Soup with chunks",
+                "Casseroles", "Family meal portions"
+            ],
+            "Month 9-12: Joining Family Meals": [
+                "Full family dinners", "Complex textures", "Spiced foods", "Raw vegetables",
+                "Whole fruits", "Nuts and seeds", "Honey (after 12 months)", "Whole milk products",
+                "Restaurant foods", "Cultural dishes"
+            ]
+        };
+
+        // Initialize data storage
+        let weaningData = JSON.parse(localStorage.getItem('weaningData')) || {};
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWeaningData();
+            renderStages();
+            updateSummary();
+            startAutoSave();
+        });
+
+        function initializeWeaningData() {
+            Object.keys(weaningStages).forEach(stage => {
+                if (!weaningData[stage]) {
+                    weaningData[stage] = {};
+                }
+                weaningStages[stage].forEach(food => {
+                    if (!weaningData[stage][food]) {
+                        weaningData[stage][food] = {
+                            tried: false,
+                            count: 0,
+                            rating: 0
+                        };
+                    }
+                });
+            });
+        }
+
+        function renderStages() {
+            const container = document.getElementById('stagesContainer');
+            container.innerHTML = '';
+
+            Object.keys(weaningStages).forEach(stage => {
+                const stageDiv = document.createElement('div');
+                stageDiv.className = 'stage';
+                
+                const triedCount = weaningStages[stage].filter(food => weaningData[stage][food].tried).length;
+                const totalCount = weaningStages[stage].length;
+                
+                stageDiv.innerHTML = `
+                    <div class="stage-header" onclick="toggleStage(this)">
+                        <div class="stage-title">${stage}</div>
+                        <div class="stage-progress">${triedCount}/${totalCount} tried</div>
+                    </div>
+                    <div class="stage-content">
+                        <div class="food-grid">
+                            ${weaningStages[stage].map(food => createFoodItem(stage, food)).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(stageDiv);
+            });
+        }
+
+        function createFoodItem(stage, food) {
+            const data = weaningData[stage][food];
+            return `
+                <div class="food-item">
+                    <div class="food-name">${food}</div>
+                    <div class="food-controls">
+                        <div class="tried-container">
+                            <input type="checkbox" class="tried-checkbox" ${data.tried ? 'checked' : ''} 
+                                   onchange="updateTried('${stage}', '${food}', this.checked)">
+                            <label>Tried it!</label>
+                        </div>
+                        
+                        <div class="counter-container">
+                            <button class="counter-btn" onclick="updateCount('${stage}', '${food}', -1)">-</button>
+                            <div class="counter-display">${data.count}</div>
+                            <button class="counter-btn" onclick="updateCount('${stage}', '${food}', 1)">+</button>
+                        </div>
+                        
+                        <div class="rating-container">
+                            ${[1,2,3,4,5].map(star => 
+                                `<span class="star ${data.rating >= star ? 'filled' : ''}" 
+                                       onclick="updateRating('${stage}', '${food}', ${star})">⭐</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleStage(header) {
+            const stage = header.parentElement;
+            stage.classList.toggle('expanded');
+        }
+
+        function updateTried(stage, food, tried) {
+            weaningData[stage][food].tried = tried;
+            if (!tried) {
+                weaningData[stage][food].count = 0;
+                weaningData[stage][food].rating = 0;
+            }
+            saveData();
+            renderStages();
+            updateSummary();
+        }
+
+        function updateCount(stage, food, delta) {
+            const newCount = Math.max(0, weaningData[stage][food].count + delta);
+            weaningData[stage][food].count = newCount;
+            if (newCount > 0) {
+                weaningData[stage][food].tried = true;
+            }
+            saveData();
+            renderStages();
+            updateSummary();
+        }
+
+        function updateRating(stage, food, rating) {
+            weaningData[stage][food].rating = weaningData[stage][food].rating === rating ? 0 : rating;
+            if (rating > 0) {
+                weaningData[stage][food].tried = true;
+                if (weaningData[stage][food].count === 0) {
+                    weaningData[stage][food].count = 1;
+                }
+            }
+            saveData();
+            renderStages();
+            updateSummary();
+        }
+
+        function updateSummary() {
+            let totalTried = 0;
+            let totalLoved = 0;
+            let totalRating = 0;
+            let totalAttempts = 0;
+            let ratedFoods = 0;
+            let favorites = [];
+
+            Object.keys(weaningData).forEach(stage => {
+                Object.keys(weaningData[stage]).forEach(food => {
+                    const data = weaningData[stage][food];
+                    if (data.tried) totalTried++;
+                    if (data.rating === 5) {
+                        totalLoved++;
+                        favorites.push(food);
+                    }
+                    if (data.rating > 0) {
+                        totalRating += data.rating;
+                        ratedFoods++;
+                    }
+                    totalAttempts += data.count;
+                });
+            });
+
+            document.getElementById('totalTried').textContent = totalTried;
+            document.getElementById('totalLoved').textContent = totalLoved;
+            document.getElementById('avgRating').textContent = ratedFoods > 0 ? (totalRating / ratedFoods).toFixed(1) : '0';
+            document.getElementById('totalAttempts').textContent = totalAttempts;
+
+            const favoritesList = document.getElementById('favoritesList');
+            if (favorites.length > 0) {
+                favoritesList.innerHTML = favorites.map(food => 
+                    `<div class="favorite-item">${food}</div>`
+                ).join('');
+            } else {
+                favoritesList.innerHTML = '<div class="favorite-item">Try some foods first!</div>';
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function saveData() {
+            localStorage.setItem('weaningData', JSON.stringify(weaningData));
+        }
+
+        function startAutoSave() {
+            setInterval(() => {
+                saveData();
+                showAutoSaveIndicator();
+            }, 30000); // Save every 30 seconds
+        }
+
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(weaningData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `zachary-weaning-progress-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        weaningData = JSON.parse(e.target.result);
+                        saveData();
+                        renderStages();
+                        updateSummary();
+                        alert('Progress imported successfully!');
+                    } catch (error) {
+                        alert('Error importing file. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+    </script>
+</body>
+</html>
