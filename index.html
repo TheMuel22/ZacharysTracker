@@ -37,7 +37,11 @@
         .stage-header:hover { background: linear-gradient(135deg, #5a67d8, #6b46c1); }
         .stage-header h3 { font-size: 1.3rem; }
         .stage-progress { font-size: 0.9rem; opacity: 0.9; }
-        .stage-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 25px; background: #f8f9fa; }
+    .stage-info { background: transparent; border: none; padding: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .stage-info:focus { outline: none; box-shadow: none; }
+    /* collapsed by default; .stage.open will show the content */
+    .stage-content { display: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 25px; background: #f8f9fa; }
+    .stage.open .stage-content { display: grid; }
         .food-item { background: white; padding: 20px; border-radius: 12px; border: 2px solid #e9ecef; transition: all 0.3s ease; position: relative; }
         .food-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .food-item.allergy-flagged { border-color: #ffc107; background: #fffbf0; }
@@ -119,19 +123,48 @@
             .meal-input-section { flex-direction: column; align-items: stretch; } 
             .add-meal-btn { width: 100%; margin-top: 10px; } 
         }
+
+        /* Info modal title separator */
+        .info-modal h4 { border-bottom: 1px solid #e9ecef; padding-bottom: 8px; margin-bottom: 10px; }
+    /* Monetization UI */
+    .monetize-row { display:flex; gap:12px; align-items:center; justify-content:center; margin:18px 0; }
+    .ad-placeholder { max-width:320px; width:100%; text-align:center; opacity:0.95; border:1px dashed #ddd; padding:8px; border-radius:8px; background: #ffffffaa; }
+    .affiliate-card { background: linear-gradient(180deg,#fff 0%, #f8f9fa 100%); border: 1px solid #e9ecef; padding: 12px; border-radius: 12px; display:flex; gap:12px; align-items:center; justify-content:space-between; max-width:720px; margin: 12px auto; }
+    .affiliate-info { display:flex; gap:12px; align-items:center; }
+    .affiliate-btn { background:#ff9900; color:#111; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; text-decoration:none; }
+    .affiliate-disclaimer { font-size:0.85rem; color:#6c757d; text-align:center; margin-top:8px; }
+    .consent-banner { position: fixed; bottom: 18px; left: 18px; right: 18px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 12px 16px; display: none; z-index: 5000; align-items:center; justify-content:space-between; gap:12px; }
+    .consent-text { color:#495057; font-size:0.95rem; }
+    .consent-actions { display:flex; gap:8px; }
+    .consent-btn { background:#667eea; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    .consent-btn.secondary { background:#6c757d; }
+    .privacy-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 6000; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; max-width: 760px; width: 92%; max-height: 80vh; overflow-y: auto; }
     </style>
 </head>
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
-        <div class="login-container">
-            <h2 class="login-title">🍼 Weaning Tracker</h2>
-            <div class="login-form">
-                <input type="text" id="loginUsername" class="login-input" placeholder="Username" maxlength="30">
-                <input type="password" id="loginPassword" class="login-input" placeholder="Password" maxlength="30">
-                <button id="loginBtn" class="login-btn">Login</button>
-                <div class="register-toggle" id="registerToggle">Don't have an account? Register here</div>
-            </div>
+            <div class="login-container">
+            <img src="this.png" alt="Weaning Tracker Logo" style="display:block; margin:0 auto 15px auto; max-width:220px;" />
+            <h2 class="login-title"></h2>
+            <form id="loginForm" class="login-form">
+                <input type="text" id="loginEmail" class="login-input" placeholder="Email address or username" maxlength="100">
+                <input type="password" id="loginPassword" class="login-input" placeholder="Password" maxlength="100">
+                <input type="password" id="loginPasswordConfirm" class="login-input" placeholder="Confirm password (for registration)" maxlength="100" style="display:none">
+                <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                    <input type="checkbox" id="rememberMe" />
+                    <label for="rememberMe" style="font-size:0.95rem; color:#6c757d;">Remember me on this device</label>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="submit" id="loginBtn" class="login-btn">Login</button>
+                </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                    <button type="button" class="register-toggle" id="registerToggle">Don't have an account? Register</button>
+                    <div style="font-size:0.9rem;"><a href="javascript:void(0)" id="forgotPassword">Forgot password?</a></div>
+                </div>
+                <div id="loginStatus" style="margin-top:10px; font-size:0.9rem; color:#6c757d;"></div>
+
+            </form>
         </div>
     </div>
 
@@ -140,7 +173,7 @@
         <div class="achievement-icon" id="achievementIcon">🏆</div>
         <div class="achievement-title" id="achievementTitle">Achievement Unlocked!</div>
         <div class="achievement-desc" id="achievementDesc">You've reached a milestone!</div>
-        <button class="achievement-close" onclick="closeAchievement()">Awesome!</button>
+    <button type="button" class="achievement-close" onclick="closeAchievement()">Awesome!</button>
     </div>
 
     <!-- Allergy Modal -->
@@ -163,8 +196,8 @@
             </div>
             <textarea id="allergyNotes" placeholder="Additional notes about the reaction..." rows="3" style="width: 100%; margin: 10px 0; padding: 10px; border: 2px solid #dee2e6; border-radius: 10px;"></textarea>
             <div class="modal-buttons">
-                <button class="modal-btn cancel" onclick="closeAllergyModal()">Cancel</button>
-                <button class="modal-btn save" onclick="saveAllergyReport()">Report Reaction</button>
+                <button type="button" class="modal-btn cancel" onclick="closeAllergyModal()">Cancel</button>
+                <button type="button" class="modal-btn save" onclick="saveAllergyReport()">Report Reaction</button>
             </div>
         </div>
     </div>
@@ -177,15 +210,15 @@
         <div class="header">
             <div class="user-info">
                 👤 <span id="currentUser"></span>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button type="button" class="logout-btn" onclick="logout()">Logout</button>
             </div>
             <img src="this.png" alt="Zachary's Weaning Tracker" class="header-logo">
             <p>Track every taste, every try, every triumph!</p>
         </div>
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('summary')">📊 Summary</button>
-            <button class="tab" onclick="switchTab('stages')">📅 Stages</button>
-            <button class="tab" onclick="switchTab('addMeal')">➕ Add Meal</button>
+            <button type="button" class="tab active" onclick="switchTab('summary', event)">📊 Summary</button>
+            <button type="button" class="tab" onclick="switchTab('stages', event)">📅 Stages</button>
+            <button type="button" class="tab" onclick="switchTab('addMeal', event)">➕ Add Meal</button>
         </div>
         <div class="content">
             <div id="summary" class="tab-content active">
@@ -197,11 +230,37 @@
                 </div>
                 <div class="progress-bar"><div class="progress-fill" id="progressBar"></div><div class="progress-text" id="progressText">0% Complete</div></div>
                 <div class="controls">
-                    <button class="export-btn" onclick="exportData()">📥 Export Data</button>
-                    <button class="import-btn" onclick="importData()">📤 Import Data</button>
+                    <button type="button" class="export-btn" onclick="exportData()">📥 Export Data</button>
+                    <button type="button" class="import-btn" onclick="importData()">📤 Import Data</button>
                     <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(this)">
                 </div>
                 <div class="notes-section"><h3>📝 Notes</h3><textarea class="notes-textarea" id="notesArea" placeholder="Add any notes about Zachary's weaning journey..."></textarea></div>
+                <!-- Monetization: donation + ad placeholder -->
+                <div class="monetize-row" id="monetizeRow">
+                    <a href="https://www.buymeacoffee.com/YOURNAME" target="_blank" rel="noopener noreferrer">
+                        <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy Me A Coffee" style="height:36px;">
+                    </a>
+                    <div id="adPlaceholder" class="ad-placeholder">
+                        <small>Ad space (replace with AdSense ad unit after account/site approval)</small>
+                    </div>
+
+                    <!-- Affiliate card: Amazon Associate link + required disclosure -->
+                    <div class="affiliate-card" style="display:flex; align-items:center; gap:12px; margin-left:18px;">
+                        <a href="https://amzn.to/45wAMkT" target="_blank" rel="noopener noreferrer nofollow" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+                            <img src="ellas.png" alt="Ella's Kitchen product" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e6e6e6;">
+                            <div style="flex:1;">
+                                <div style="font-weight:700;">Ella's Kitchen — tasty baby food</div>
+                                <div style="font-size:0.9rem; color:#555;">Great deal on some fantastic food developed by another parent, Ella's Kitchen.</div>
+                            </div>
+                            <div>
+                                <span class="affiliate-cta" style="display:inline-block;background:#ff9900;color:#111;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:700;">Shop on Amazon</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="affiliate-disclaimer" style="width:100%; margin-top:8px; font-size:0.82rem; color:#444;">
+                        <small>Disclosure: As an Amazon Associate I earn from qualifying purchases. This is an affiliate link — thank you for supporting development.</small>
+                    </div>
+                </div>
             </div>
             <div id="stages" class="tab-content"><div id="stagesContainer"></div></div>
             <div id="addMeal" class="tab-content">
@@ -218,18 +277,41 @@
                     </div>
                     <div class="meal-input-section">
                         <input type="text" id="mealName" class="meal-input" placeholder="Enter custom meal name (e.g., 'Homemade applesauce')" maxlength="50">
-                        <button id="addMealBtn" class="add-meal-btn" disabled>Add Meal</button>
+                        <button type="button" id="addMealBtn" class="add-meal-btn" disabled>Add Meal</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="auto-save-indicator" id="autoSaveIndicator">✅ Synced to cloud!</div>
+    <div class="info-modal" id="infoModal" style="display:none; position:fixed; z-index:4000; left:50%; top:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:600px; width:90%;">
+        <button type="button" class="close-info" id="closeInfoBtn" style="position:absolute; right:10px; top:10px;">✖</button>
+        <h4 id="infoModalTitle">Info</h4>
+        <div id="infoModalBody"></div>
+    </div>
+    <!-- Consent banner for ads -->
+    <div class="consent-banner" id="consentBanner">
+        <div class="consent-text">We use ads to support development. Allow personalized ads on this device?</div>
+        <div class="consent-actions">
+            <button type="button" class="consent-btn secondary" id="consentDecline">Not now</button>
+            <button type="button" class="consent-btn" id="consentAccept">Yes, enable ads</button>
+        </div>
+    </div>
+
+    <!-- Privacy modal (explain ad behaviour) -->
+    <div class="privacy-modal" id="privacyModal">
+        <h3>Privacy & Ads</h3>
+        <p>We may load third-party advertising scripts (e.g., Google AdSense) which may use cookies to personalise ads. You can choose to enable ads or keep the app ad-free. For details, see our privacy policy (you should host a privacy policy on your site when using ad networks).</p>
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+            <button type="button" class="consent-btn secondary" id="privacyClose">Close</button>
+        </div>
+    </div>
     
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getDatabase, ref, onValue, set, push, get } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 
         // Your Firebase configuration
         const firebaseConfig = {
@@ -247,12 +329,13 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Global variables
-        let currentUser = null;
-        let currentUserData = {};
-        let isRegistering = false;
-        let allergyModalData = {};
-        let achievementQueue = [];
+    // Global variables
+    let currentUser = null;
+    let currentUserData = {};
+    let isRegistering = false;
+    let loginInProgress = false;
+    let allergyModalData = {};
+    let achievementQueue = [];
 
         // Weaning stages data (mutable for custom meals)
         let weaningStages = {
@@ -262,6 +345,94 @@
             "Week 7-10: Variety & Textures": ["Scrambled egg", "Soft cooked chicken strips", "Toast fingers", "Cheese cubes", "Soft cooked fish flakes", "Pasta with sauce", "Steamed vegetable sticks", "Soft fruits in pieces", "Rice cakes", "Yogurt", "Well-cooked lentils", "Soft cooked beef strips"],
             "Week 11-16: Chopped & Chunkier": ["Chopped chicken", "Chopped vegetables", "Harder fruits", "Sandwich pieces", "Mini meatballs", "Chopped hard-boiled egg", "Pasta salad", "Roasted vegetables", "Grated cheese", "Chopped fish", "Bean salads", "Finger foods"],
             "Month 9-12: Joining Family Meals": ["Family meal portions", "Whole fruits", "Raw vegetables", "Nuts (chopped/ground)", "Whole grains", "Spiced foods", "Mixed textures", "Self-feeding foods", "Cup drinking", "Family snacks", "Complex meals", "Adult portions (smaller)"]
+        };
+
+        // Info content per stage (displayed when the info icon is clicked)
+        const infoContent = {
+            "Week 1-2: First Tastes": {
+                title: 'Week 1-2 — First Tastes',
+                body: `
+                    <h4>When</h4>
+                    <p>Start introducing single-ingredient purees and smooth textures once your baby is developmentally ready to accept solids (usually around 4-6 months but follow your healthcare professional's advice).</p>
+                    <h4>How much</h4>
+                    <p>Begin with 1-2 teaspoons per offering, gradually increasing to a tablespoon as interest grows. Watch cues for fullness and enjoyment.</p>
+                    <h4>Water</h4>
+                    <p>Offer small sips of cooled, boiled water from an open cup or spout cup with meals; focus on breastmilk/formula as the main drink at this stage.</p>
+                    <h4>Consistency</h4>
+                    <p>Smooth, runny purees with no lumps; single-ingredient textures to start.</p>
+                    <p style="margin-top:8px; font-weight:bold;">All children are different — if you are worried about feeding or reactions, speak to your doctor, health visitor, or paediatrician.</p>
+                `
+            },
+            "Week 3-4: Building Confidence": {
+                title: 'Week 3-4 — Building Confidence',
+                body: `
+                    <h4>When</h4>
+                    <p>Continue daily exposures to a wider range of purees and introduce gentle flavour combinations.</p>
+                    <h4>How much</h4>
+                    <p>Offer 1-3 tablespoons; allow baby to lead intake. Don’t force feed; responsive feeding helps acceptance.</p>
+                    <h4>Water</h4>
+                    <p>Small sips (15–30ml) with meals are fine; milk remains primary source of hydration and nutrition.</p>
+                    <h4>Consistency</h4>
+                    <p>Smoother purees with slightly thicker texture than first feeds; still no lumps.</p>
+                    <p style="margin-top:8px; font-weight:bold;">All children are different — if you are worried, speak to your doctor or health visitor.</p>
+                `
+            },
+            "Week 5-6: Introducing Lumps": {
+                title: 'Week 5-6 — Introducing Lumps',
+                body: `
+                    <h4>When</h4>
+                    <p>Introduce thicker purees and mashed textures when your baby shows readiness for more texture (can sit with support and manage mouth movement).</p>
+                    <h4>How much</h4>
+                    <p>Portions may increase to 2–4 tablespoons; continue to follow baby’s cues and maintain milk feeds as usual.</p>
+                    <h4>Water</h4>
+                    <p>Offer small amounts of water with meals (about 20–40ml) to help with swallowing textured foods.</p>
+                    <h4>Consistency</h4>
+                    <p>Mashed textures with small, soft lumps; avoid hard pieces. Ensure food is soft and easily mashable between fingers.</p>
+                    <p style="margin-top:8px; font-weight:bold;">All children are different — if you are worried, speak to your doctor or health visitor.</p>
+                `
+            },
+            "Week 7-10: Variety & Textures": {
+                title: 'Week 7-10 — Variety & Textures',
+                body: `
+                    <h4>When</h4>
+                    <p>Introduce varied tastes and textures, including soft finger foods and protein sources when baby can sit steadily and self-feed.</p>
+                    <h4>How much</h4>
+                    <p>Serve 3–4 small spoonfuls/finger-food pieces per offering, increasing as appetite and skills grow. Let baby guide pace and amount.</p>
+                    <h4>Water</h4>
+                    <p>Offer water in small amounts (30–60ml) with meals; focus on regular sips from a cup to practise drinking skills.</p>
+                    <h4>Consistency</h4>
+                    <p>Soft cooked pieces, mashed with lumps, and soft finger-food shapes that baby can grasp and gum safely.</p>
+                    <p style="margin-top:8px; font-weight:bold;">All children are different — if you are worried, speak to your doctor or health visitor.</p>
+                `
+            },
+            "Week 11-16: Chopped & Chunkier": {
+                title: 'Week 11-16 — Chopped & Chunkier',
+                body: `
+                    <h4>When</h4>
+                    <p>Gradually move towards chopped family foods and chunkier textures as chewing and swallowing skills mature.</p>
+                    <h4>How much</h4>
+                    <p>Offer several small portions over the meal (finger-food portions or spoon-fed bits); allow baby to explore and self-feed increasing amounts.</p>
+                    <h4>Water</h4>
+                    <p>Offer water freely with meals (50–100ml depending on age and climate); encourage cup use.</p>
+                    <h4>Consistency</h4>
+                    <p>Soft chopped pieces, small, manageable chunks — avoid hard, small round foods (e.g., whole grapes, nuts) unless prepared safely.</p>
+                    <p style="margin-top:8px; font-weight:bold;">All children are different — if you are worried, speak to your doctor or health visitor.</p>
+                `
+            },
+            "Month 9-12: Joining Family Meals": {
+                title: 'Month 9-12 — Joining Family Meals',
+                body: `
+                    <h4>When</h4>
+                    <p>Encourage your baby to take part in family meals, offering age-appropriate portions and textures that match family dishes adjusted for safety.</p>
+                    <h4>How much</h4>
+                    <p>Portions will vary but generally are small pieces that make up part of a meal; breastmilk/formula remains important.</p>
+                    <h4>Water</h4>
+                    <p>Offer water regularly with meals (60–120ml per meal depending on intake); milk remains primary hydration between meals.</p>
+                    <h4>Consistency</h4>
+                    <p>More varied textures and small family food pieces; focus on safe sizes and soft cooking methods.</p>
+                    <p style="margin-top:8px; font-weight:bold;">All children are different — if you are worried, speak to your doctor or health visitor.</p>
+                `
+            }
         };
 
         // Data storage
@@ -285,117 +456,339 @@
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
+            applyFeatureMode();
             setupLoginSystem();
         });
 
-        // Login System
+        // Feature flag / UI mode initializer (stubbed to avoid ReferenceError)
+        // You can extend this to toggle dev features or alternate UI modes.
+        function applyFeatureMode() {
+            // Placeholder: ensure any optional features are turned off by default
+            // e.g., window.FEATURE_DEBUG = false;
+            return;
+        }
+
+        // Setup Firebase Auth
+        let auth = null;
+
         function setupLoginSystem() {
-            // Auto-login Zachary for existing data
-            const savedUser = localStorage.getItem('weaningUser');
-            if (savedUser === 'Zachary') {
-                currentUser = 'Zachary';
-                document.getElementById('currentUser').textContent = currentUser;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                loadFromFirebase();
-                setupAddMealTab();
-                setupRealtimeListeners();
+            auth = getAuth(app);
+            // Do not set persistence globally here. We'll set it at login based on "Remember me".
+
+            // Attach UI handlers
+            // login button is submit inside the form; form submit handler will handle login
+            const regToggle = document.getElementById('registerToggle');
+            if (regToggle) regToggle.addEventListener('click', toggleRegister);
+            const forgot = document.getElementById('forgotPassword');
+            if (forgot) forgot.addEventListener('click', handleForgotPassword);
+
+            // Use form submit to handle Enter and button clicks reliably
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if (loginInProgress) return; // avoid double submits
+                    loginInProgress = true;
+                    handleLogin().finally(() => { loginInProgress = false; });
+                });
             }
 
-            document.getElementById('loginBtn').addEventListener('click', handleLogin);
-            document.getElementById('registerToggle').addEventListener('click', toggleRegister);
-        }
+            // ...existing code...
 
-        function toggleRegister() {
-            isRegistering = !isRegistering;
-            const btn = document.getElementById('loginBtn');
-            const toggle = document.getElementById('registerToggle');
-            
-            if (isRegistering) {
-                btn.textContent = 'Register';
-                toggle.textContent = 'Already have an account? Login here';
-            } else {
-                btn.textContent = 'Login';
-                toggle.textContent = "Don't have an account? Register here";
+            // ...existing code...
+
+            // Inputs will submit via the form; no per-input Enter handlers needed
+
+            // React to auth state changes
+            onAuthStateChanged(getAuth(app), (user) => {
+                if (user) {
+                    currentUser = user.uid;
+                    currentUserData = {};
+                    document.getElementById('currentUser').textContent = user.email || currentUser;
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    loadFromFirebase();
+                    setupAddMealTab();
+                    setupRealtimeListeners();
+                } else {
+                    currentUser = null;
+                    document.getElementById('currentUser').textContent = '';
+                    document.getElementById('loginScreen').style.display = 'flex';
+                    document.getElementById('mainApp').style.display = 'none';
+                }
+            });
+
+            // Toggle register/login UI
+            function toggleRegister() {
+                isRegistering = !isRegistering;
+                const btn = document.getElementById('loginBtn');
+                const toggle = document.getElementById('registerToggle');
+                const confirm = document.getElementById('loginPasswordConfirm');
+                if (isRegistering) {
+                    if (btn) btn.textContent = 'Register';
+                    if (toggle) toggle.textContent = 'Already have an account? Login';
+                    if (confirm) confirm.style.display = 'block';
+                } else {
+                    if (btn) btn.textContent = 'Login';
+                    if (toggle) toggle.textContent = "Don't have an account? Register";
+                    if (confirm) { confirm.style.display = 'none'; confirm.value = ''; }
+                }
             }
+
         }
 
-        async function handleLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
+            async function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
+            const confirm = document.getElementById('loginPasswordConfirm').value.trim();
+            const statusEl = document.getElementById('loginStatus');
 
-            if (!username || !password) {
-                alert('Please enter both username and password');
+            if (!email || !password) {
+                if (statusEl) statusEl.textContent = 'Please enter both email and password';
                 return;
             }
 
-            showLoading(true);
+            if (isRegistering && password !== confirm) {
+                if (statusEl) statusEl.textContent = 'Passwords do not match';
+                return;
+            }
 
             try {
-                const userRef = ref(database, `users/${username}`);
-                const userSnapshot = await get(userRef);
+                if (statusEl) statusEl.textContent = isRegistering ? 'Registering account...' : 'Signing in...';
+                showLoading(true);
 
-                if (isRegistering) {
-                    if (userSnapshot.exists()) {
-                        alert('Username already exists! Please choose a different one.');
+                // Legacy username/password: if identifier doesn't contain '@', treat as username
+                if (email.indexOf('@') === -1) {
+                    const nameKey = email.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+                    try {
+                        // 1) Check usersByName mapping
+                        const nameRef = ref(database, `usersByName/${nameKey}`);
+                        const snap = await get(nameRef);
+                        let uid = null;
+                        let userSnapshot = null;
+                        if (snap.exists()) {
+                            const mapping = snap.val();
+                            uid = mapping.uid;
+                        }
+
+                        // 2) If not found, check users/<nameKey>
+                        if (!uid) {
+                            const directRef = ref(database, `users/${nameKey}`);
+                            const directSnap = await get(directRef);
+                            if (directSnap.exists()) {
+                                uid = nameKey;
+                            }
+                        }
+
+                        // 3) As a last resort, scan users for a username/displayName match (case-insensitive)
+                        if (!uid) {
+                            const usersRef = ref(database, `users`);
+                            const usersSnap = await get(usersRef);
+                            if (usersSnap.exists()) {
+                                const usersObj = usersSnap.val();
+                                for (const [k, v] of Object.entries(usersObj)) {
+                                    const candidateNames = [ (v.username||''), (v.name||''), (v.displayName||''), (v.email||'') ];
+                                    if (candidateNames.map(x=>String(x).toLowerCase()).includes(nameKey)) {
+                                        uid = k;
+                                        userSnapshot = { key: k, val: v };
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!uid) {
+                            if (statusEl) statusEl.textContent = `User not found for "${email}"`;
+                            console.debug('Legacy login: no uid found for', { identifier: email, nameKey });
+                            showLoading(false);
+                            return;
+                        }
+
+                        // fetch final user data if not already
+                        if (!userSnapshot) {
+                            const finalSnap = await get(ref(database, `users/${uid}`));
+                            if (!finalSnap.exists()) { if (statusEl) statusEl.textContent = 'User record missing'; showLoading(false); return; }
+                            userSnapshot = { key: uid, val: finalSnap.val() };
+                        }
+
+                        // Accept common password fields: password, pwd, pass
+                        const stored = userSnapshot.val;
+                        const candidates = ['password','pwd','pass','loginPassword','pw','hash'];
+                        let possible = '';
+                        let matchedField = null;
+                        for (const f of candidates) {
+                            if (stored[f]) { possible = stored[f]; matchedField = f; break; }
+                        }
+                        if (!possible) {
+                            // try to find any string field
+                            for (const [kField, vField] of Object.entries(stored)) {
+                                if (typeof vField === 'string') { possible = vField; matchedField = kField; break; }
+                            }
+                        }
+                        if (!possible) {
+                            if (statusEl) statusEl.textContent = `No password field found for user ${uid || nameKey}`;
+                            console.debug('Legacy login: user record has no string fields to verify', { uid, fields: Object.keys(stored || {}) });
+                            showLoading(false);
+                            return;
+                        }
+
+                        // Helper: load bcryptjs dynamically when needed
+                        function loadBcrypt() {
+                            return new Promise((resolve, reject) => {
+                                if (window.bcrypt && window.bcrypt.compare) return resolve(window.bcrypt);
+                                const src = 'https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js';
+                                const s = document.createElement('script');
+                                s.src = src;
+                                s.onload = () => {
+                                    // bcrypt is exposed as dcodeIO_bcrypt or bcrypt
+                                    const b = window.dcodeIO_bcrypt || window.bcrypt || window.dcodeIO_bcrypt_module;
+                                    if (b) return resolve(b);
+                                    if (window.bcrypt) return resolve(window.bcrypt);
+                                    resolve(window.bcrypt || window.dcodeIO_bcrypt);
+                                };
+                                s.onerror = reject;
+                                document.head.appendChild(s);
+                            });
+                        }
+
+                        async function verifySha256(salt, expectedHex, pw) {
+                            const enc = new TextEncoder();
+                            const data = enc.encode(salt + pw);
+                            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                            const hashArray = Array.from(new Uint8Array(hashBuffer));
+                            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                            return hashHex === expectedHex.toLowerCase();
+                        }
+
+                        // If stored looks like bcrypt hash ($2a$... / $2b$...)
+                        if (typeof possible === 'string' && possible.startsWith('$2')) {
+                            try {
+                                const bcrypt = await loadBcrypt();
+                                const ok = await new Promise((res) => bcrypt.compare(password, possible, function(err, result){ if (err) { console.error(err); return res(false); } res(result); }));
+                                if (!ok) { 
+                                    if (statusEl) statusEl.textContent = `Incorrect username or password (checked field: ${matchedField || 'unknown'}, algo: bcrypt)`; 
+                                    console.debug('Legacy login bcrypt mismatch', { uid, matchedField });
+                                    showLoading(false); 
+                                    return; 
+                                }
+                            } catch (e) {
+                                console.error('Bcrypt verify failed', e);
+                                if (statusEl) statusEl.textContent = `Login failed (bcrypt verify) - field:${matchedField || 'unknown'}`; showLoading(false); return;
+                            }
+                        } else if (typeof possible === 'string' && possible.startsWith('sha256$')) {
+                            // format: sha256$<salt>$<hexhash>
+                            const parts = possible.split('$');
+                            if (parts.length >= 3) {
+                                const salt = parts[1];
+                                const hex = parts[2];
+                                const ok = await verifySha256(salt, hex, password);
+                                if (!ok) { 
+                                    if (statusEl) statusEl.textContent = `Incorrect username or password (checked field: ${matchedField || 'unknown'}, algo: sha256)`; 
+                                    console.debug('Legacy login sha256 mismatch', { uid, matchedField });
+                                    showLoading(false); 
+                                    return; 
+                                }
+                            } else {
+                                if (statusEl) statusEl.textContent = `Invalid stored hash format - field:${matchedField || 'unknown'}`; showLoading(false); return;
+                            }
+                        } else {
+                            // plain-text fallback (legacy)
+                            if (possible !== password) {
+                                // As a last-ditch effort, search any string field in stored for a match
+                                let foundInField = false;
+                                for (const [kField, vField] of Object.entries(stored)) {
+                                    if (typeof vField === 'string' && vField === password) { foundInField = true; matchedField = kField; break; }
+                                }
+                                if (!foundInField) { 
+                                    if (statusEl) statusEl.textContent = `Incorrect username or password (checked field: ${matchedField || 'unknown'})`; 
+                                    console.debug('Legacy login plaintext mismatch - scanned fields', { uid, checkedField: matchedField, fields: Object.keys(stored || {}) });
+                                    showLoading(false); 
+                                    return; 
+                                }
+                            }
+                        }
+
+                        // Success
+                        currentUser = uid;
+                        document.getElementById('currentUser').textContent = stored.displayName || nameKey;
+                        document.getElementById('loginScreen').style.display = 'none';
+                        document.getElementById('mainApp').style.display = 'block';
+                        await loadFromFirebase();
+                        setupAddMealTab();
+                        setupRealtimeListeners();
+                        if (statusEl) statusEl.textContent = 'Logged in';
+                        showLoading(false);
+                        return;
+                    } catch (e) {
+                        console.error('Legacy login error', e);
+                        if (statusEl) statusEl.textContent = `Login failed (legacy): ${e && e.message ? e.message : 'unknown error'}`;
                         showLoading(false);
                         return;
                     }
-                    
-                    // Create new user
-                    await set(userRef, {
-                        password: password,
-                        createdAt: new Date().toISOString(),
-                        weaningData: {},
-                        allergyData: {},
-                        notes: '',
-                        achievements: {}
-                    });
-                    
-                    currentUser = username;
-                    showAutoSave(`✅ Account created for ${username}!`);
-                } else {
-                    if (!userSnapshot.exists()) {
-                        alert('User not found! Please register first.');
-                        showLoading(false);
-                        return;
-                    }
-
-                    const userData = userSnapshot.val();
-                    if (userData.password !== password) {
-                        alert('Incorrect password!');
-                        showLoading(false);
-                        return;
-                    }
-
-                    currentUser = username;
                 }
 
-                // Save login state and switch to main app
-                localStorage.setItem('weaningUser', currentUser);
-                document.getElementById('currentUser').textContent = currentUser;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                
-                loadFromFirebase();
-                setupAddMealTab();
-                setupRealtimeListeners();
-                showLoading(false);
+                // Email/password path (Firebase Auth)
+                // Determine persistence: rememberMe -> local, otherwise session
+                try {
+                    const remember = document.getElementById('rememberMe') && document.getElementById('rememberMe').checked;
+                    await setPersistence(getAuth(app), remember ? browserLocalPersistence : browserSessionPersistence);
+                } catch (pErr) {
+                    console.warn('Could not set persistence', pErr);
+                }
 
-            } catch (error) {
-                console.error('Login error:', error);
-                alert('Login failed. Please try again.');
+                if (isRegistering) {
+                    // Create account with Firebase Auth
+                    const cred = await createUserWithEmailAndPassword(getAuth(app), email, password);
+                    currentUser = cred.user.uid;
+                    // Initialize a minimal DB node for the user (do NOT store password)
+                    const userRef = ref(database, `users/${currentUser}`);
+                    await set(userRef, { createdAt: new Date().toISOString(), weaningData: {}, allergyData: {}, notes: '', achievements: {} });
+                    if (statusEl) statusEl.textContent = `Account created for ${email}`;
+                } else {
+                    // Sign in
+                    const cred = await signInWithEmailAndPassword(getAuth(app), email, password);
+                    currentUser = cred.user.uid;
+                }
+
+                // On success, auth state change listener will hide login and load data
+            } catch (err) {
+                console.error('Auth error:', err);
+                if (statusEl) statusEl.textContent = `Authentication failed${err && err.message ? ': ' + err.message : ''}`;
+                // If trying to register but email already used, offer reset
+                if (isRegistering && err && err.code === 'auth/email-already-in-use') {
+                    if (confirm('That email is already registered. Send a password reset email?')) {
+                        try { await sendPasswordResetEmail(getAuth(app), email); alert('Reset email sent.'); } catch(e){ console.error(e); alert('Could not send reset email'); }
+                    }
+                }
+            } finally {
                 showLoading(false);
+            }
+        }
+
+        async function handleForgotPassword(e) {
+            e && e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email) { alert('Enter your email in the email field to receive a password reset link.'); return; }
+            try {
+                await sendPasswordResetEmail(getAuth(app), email);
+                alert('Password reset email sent. Check your inbox.');
+            } catch (err) {
+                console.error('Reset error:', err);
+                alert(err && err.message ? err.message : 'Could not send password reset email');
             }
         }
 
         window.logout = function() {
+            if (auth) {
+                signOut(auth).catch(err => console.error('Sign out error', err));
+            }
             currentUser = null;
-            localStorage.removeItem('weaningUser');
-            document.getElementById('loginScreen').style.display = 'block';
-            document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('loginUsername').value = '';
+            currentUserData = {};
+            document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPasswordConfirm').value = '';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
             weaningData = {};
             allergyData = {};
             notes = '';
@@ -583,6 +976,23 @@
             }
         });
 
+        // Info modal close handler
+        const closeInfoBtnEl = document.getElementById('closeInfoBtn');
+        if (closeInfoBtnEl) {
+            closeInfoBtnEl.addEventListener('click', function() {
+                const modal = document.getElementById('infoModal');
+                if (modal) modal.style.display = 'none';
+            });
+        }
+
+        // Close info modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('infoModal');
+                if (modal) modal.style.display = 'none';
+            }
+        });
+
         window.saveAllergyReport = function() {
             const selectedSymptoms = Array.from(document.querySelectorAll('.symptom-option.selected'))
                 .map(opt => opt.dataset.symptom);
@@ -623,21 +1033,15 @@
         }
 
         // Tab switching functionality
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-            
-            if (tabName === 'stages') {
-                renderStages();
+        window.switchTab = function(tabName, evt) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            const tabEl = document.getElementById(tabName);
+            if (tabEl) tabEl.classList.add('active');
+            if (evt && evt.currentTarget) {
+                try { evt.currentTarget.classList.add('active'); } catch(e){}
             }
+            if (tabName === 'stages') renderStages();
         }
 
         // Setup add meal tab functionality
@@ -686,10 +1090,11 @@
                 document.querySelectorAll('.stage-option').forEach(opt => {
                     opt.classList.remove('selected');
                 });
+                const addedStage = selectedStage; // capture before clearing
                 selectedStage = null;
                 updateAddButton();
-                
-                showAutoSave(`Added "${mealName}" to ${selectedStage}`);
+
+                showAutoSave(`Added "${mealName}" to ${addedStage}`);
                 
                 if (document.getElementById('stages').classList.contains('active')) {
                     renderStages();
@@ -710,9 +1115,18 @@
                 const progressText = `${triedCount}/${foods.length} tried`;
 
                 stageDiv.innerHTML = `
-                    <div class="stage-header" onclick="toggleStage('${stageName}')">
+                    <div class="stage-header" data-stage="${stageName}">
                         <h3>${stageName}</h3>
-                        <div class="stage-progress">${progressText}</div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="stage-progress">${progressText}</div>
+                            <button type="button" class="stage-info info-icon" data-stage="${stageName}" title="Stage info" aria-label="Stage information">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" stroke="#ffffff" stroke-width="1.5" fill="none" />
+                                    <rect x="11" y="10" width="2" height="6" rx="1" fill="#ffffff" />
+                                    <rect x="11" y="7" width="2" height="2" rx="1" fill="#ffffff" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="stage-content" id="stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}">
                         ${foods.map(food => createFoodItemHTML(stageName, food)).join('')}
@@ -720,13 +1134,32 @@
                 `;
 
                 container.appendChild(stageDiv);
+                // Attach click listeners after appending
+                const header = stageDiv.querySelector('.stage-header');
+                if (header) header.addEventListener('click', function(e) {
+                    // Ignore clicks that come from interactive children (buttons/links)
+                    if (e.target.closest('button, a')) return;
+                    toggleStage(this.dataset.stage);
+                });
+                const infoBtn = stageDiv.querySelector('.stage-info');
+                if (infoBtn) infoBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); e.stopPropagation();
+                    const stage = this.dataset.stage;
+                    const info = infoContent[stage] || { title: 'Info', body: '<p>No information available.</p>' };
+                    document.getElementById('infoModalTitle').textContent = info.title;
+                    document.getElementById('infoModalBody').innerHTML = info.body;
+                    document.getElementById('infoModal').style.display = 'block';
+                }, true);
             });
         }
 
         // Toggle stage visibility
         window.toggleStage = function(stageName) {
             const stageContent = document.getElementById(`stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}`);
-            stageContent.style.display = stageContent.style.display === 'none' ? 'grid' : 'none';
+            if (!stageContent) return;
+            const computed = window.getComputedStyle(stageContent).display;
+            const isHidden = computed === 'none';
+            stageContent.style.display = isHidden ? 'grid' : 'none';
         }
 
         // Create food item HTML
@@ -745,12 +1178,12 @@
                             <input type="checkbox" class="tried-checkbox" 
                                    data-stage="${stageName}" data-food="${foodName}"
                                    ${foodData.tried ? 'checked' : ''}>
-                            <label>Tried it</label>
+                            <span style="cursor: default;">Tried it</span>
                         </div>
                         <div class="counter-container">
-                            <button class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="decrease">-</button>
+                            <button type="button" class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="decrease">-</button>
                             <span class="counter-display">${foodData.attempts || 0}</span>
-                            <button class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="increase">+</button>
+                            <button type="button" class="counter-btn" data-stage="${stageName}" data-food="${foodName}" data-action="increase">+</button>
                             <label>attempts</label>
                         </div>
                         <div class="rating-container">
@@ -759,7 +1192,7 @@
                                        data-stage="${stageName}" data-food="${foodName}" data-rating="${rating}">⭐</span>`
                             ).join('')}
                         </div>
-                        <button class="allergy-btn" onclick="openAllergyModal('${stageName}', '${foodName}')">
+                        <button type="button" class="allergy-btn" data-stage="${stageName}" data-food="${foodName}">
                             ⚠️ Report Reaction
                         </button>
                     </div>
@@ -769,13 +1202,33 @@
 
         // Event delegation for food controls
         document.addEventListener('click', function(e) {
+            // Prevent default/page jump for any interactive controls
+            if (e.target.matches('.counter-btn') || e.target.matches('.tried-checkbox') || e.target.matches('.star') || e.target.matches('.allergy-btn')) {
+                e.preventDefault();
+            }
+
             if (e.target.matches('.tried-checkbox')) {
+                e.stopPropagation();
                 const { stage, food } = e.target.dataset;
-                updateFoodData(stage, food, 'tried', e.target.checked);
+                const checked = e.target.checked;
+
+                // When user checks tried, ensure attempts is at least 1
+                const currentAttempts = getFoodData(stage, food).attempts || 0;
+                if (checked && currentAttempts === 0) {
+                    updateFoodData(stage, food, 'attempts', 1);
+                }
+
+                // When user unchecks tried, set attempts to 0
+                if (!checked) {
+                    updateFoodData(stage, food, 'attempts', 0);
+                }
+
+                updateFoodData(stage, food, 'tried', checked);
+                updateFoodItemDisplay(stage, food);
                 updateSummary();
                 saveToFirebase('weaningData', weaningData);
             }
-            
+
             if (e.target.matches('.counter-btn')) {
                 e.stopPropagation();
                 const { stage, food, action } = e.target.dataset;
@@ -783,13 +1236,21 @@
                 const newAttempts = action === 'increase' 
                     ? currentAttempts + 1 
                     : Math.max(0, currentAttempts - 1);
-                
+
                 updateFoodData(stage, food, 'attempts', newAttempts);
+
+                // Auto-check tried when attempts become 1 or more
+                if (newAttempts > 0) {
+                    updateFoodData(stage, food, 'tried', true);
+                } else {
+                    updateFoodData(stage, food, 'tried', false);
+                }
+
                 updateFoodItemDisplay(stage, food);
                 updateSummary();
                 saveToFirebase('weaningData', weaningData);
             }
-            
+
             if (e.target.matches('.star')) {
                 e.stopPropagation();
                 const { stage, food, rating } = e.target.dataset;
@@ -797,6 +1258,13 @@
                 updateFoodItemDisplay(stage, food);
                 updateSummary();
                 saveToFirebase('weaningData', weaningData);
+            }
+
+            if (e.target.matches('.allergy-btn')) {
+                e.stopPropagation();
+                const stage = e.target.dataset.stage;
+                const food = e.target.dataset.food;
+                openAllergyModal(stage, food);
             }
         });
 
@@ -991,7 +1459,72 @@
             }
         }
 
+        // Consent and AdSense lazy-loading handlers
+        (function setupMonetization() {
+            const consentKey = 'zc_ads_consent_v1';
+            const banner = document.getElementById('consentBanner');
+            const acceptBtn = document.getElementById('consentAccept');
+            const declineBtn = document.getElementById('consentDecline');
+            const privacyModal = document.getElementById('privacyModal');
+            const privacyClose = document.getElementById('privacyClose');
+
+            function hasConsent() { return localStorage.getItem(consentKey) === 'granted'; }
+
+            function showBannerIfNeeded() {
+                // Only show banner if not decided and container exists
+                if (!hasConsent() && banner) banner.style.display = 'flex';
+                if (hasConsent()) injectAdSense();
+            }
+
+            function injectAdSense() {
+                // id placeholders to replace after you register with AdSense
+                const ADSENSE_CLIENT = 'ca-pub-REPLACE_WITH_YOUR_CLIENT_ID';
+                const ADSENSE_SLOT = 'REPLACE_WITH_AD_SLOT';
+
+                // Avoid injecting multiple times
+                if (window.__adsense_loaded) return;
+                window.__adsense_loaded = true;
+
+                // Load the global adsbygoogle script with your client id (replace placeholder)
+                const s = document.createElement('script');
+                s.async = true;
+                s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+                s.crossOrigin = 'anonymous';
+                document.head.appendChild(s);
+
+                // Replace the adPlaceholder with an ins.adsbygoogle node (responsive)
+                const placeholder = document.getElementById('adPlaceholder');
+                if (placeholder) {
+                    placeholder.innerHTML = `
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="${ADSENSE_CLIENT}"
+                             data-ad-slot="${ADSENSE_SLOT}"
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>`;
+                    try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) { console.warn('adsbygoogle push failed', e); }
+                }
+            }
+
+            if (acceptBtn) acceptBtn.addEventListener('click', function() {
+                localStorage.setItem(consentKey, 'granted');
+                if (banner) banner.style.display = 'none';
+                injectAdSense();
+                showAutoSave('✅ Ads enabled (you can disable in settings)');
+            });
+
+            if (declineBtn) declineBtn.addEventListener('click', function() {
+                localStorage.setItem(consentKey, 'denied');
+                if (banner) banner.style.display = 'none';
+                showAutoSave('Ads are disabled');
+            });
+
+            if (privacyClose) privacyClose.addEventListener('click', function() { privacyModal.style.display = 'none'; });
+
+            // Show banner after a short delay so it doesn't block the initial UX
+            setTimeout(showBannerIfNeeded, 1000);
+        })();
+
     </script>
 </body>
 </html>
-
