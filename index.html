@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -127,19 +127,31 @@
 
         /* Info modal title separator */
         .info-modal h4 { border-bottom: 1px solid #e9ecef; padding-bottom: 8px; margin-bottom: 10px; }
-    /* Monetization UI */
-    .monetize-row { display:flex; gap:12px; align-items:center; justify-content:center; margin:18px 0; }
-    .ad-placeholder { max-width:320px; width:100%; text-align:center; opacity:0.95; border:1px dashed #ddd; padding:8px; border-radius:8px; background: #ffffffaa; }
-    .affiliate-card { background: linear-gradient(180deg,#fff 0%, #f8f9fa 100%); border: 1px solid #e9ecef; padding: 12px; border-radius: 12px; display:flex; gap:12px; align-items:center; justify-content:space-between; max-width:720px; margin: 12px auto; }
+    /* Monetization UI - responsive */
+    .monetize-row { display:flex; gap:12px; align-items:center; justify-content:center; margin:18px 0; flex-wrap:wrap; }
+    /* allow children to shrink without overflowing their container */
+    .monetize-row > * { min-width:0; }
+    .monetize-row a { display:flex; align-items:center; justify-content:center; flex: 0 1 auto; text-decoration:none; color:inherit; }
+    .buyme-link { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#ffffff; border:1px solid #eee; border-radius:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); font-weight:700; }
+    .buyme-label { font-size:0.95rem; color:#333; }
+    /* Ad placeholder removed per user request */
+    .affiliate-card { background: linear-gradient(180deg,#fff 0%, #f8f9fa 100%); border: 1px solid #e9ecef; padding: 12px; border-radius: 12px; display:flex; gap:12px; align-items:center; justify-content:space-between; max-width:720px; margin: 12px auto; flex: 1 1 420px; }
     .affiliate-info { display:flex; gap:12px; align-items:center; }
     .affiliate-btn { background:#ff9900; color:#111; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; text-decoration:none; }
     .affiliate-disclaimer { font-size:0.85rem; color:#6c757d; text-align:center; margin-top:8px; }
-    .consent-banner { position: fixed; bottom: 18px; left: 18px; right: 18px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 12px 16px; display: none; z-index: 5000; align-items:center; justify-content:space-between; gap:12px; }
-    .consent-text { color:#495057; font-size:0.95rem; }
-    .consent-actions { display:flex; gap:8px; }
-    .consent-btn { background:#667eea; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
-    .consent-btn.secondary { background:#6c757d; }
-    .privacy-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 6000; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; max-width: 760px; width: 92%; max-height: 80vh; overflow-y: auto; }
+
+    /* Small screens: stack items vertically and make them full-width */
+    @media (max-width: 480px) {
+        .monetize-row { gap:10px; justify-content:center; }
+        .monetize-row a, .monetize-row .ad-placeholder, .monetize-row .affiliate-card { flex: 1 1 100%; max-width:100%; margin-left:0; }
+        .monetize-row a { padding:6px 0; }
+        .buyme-link { justify-content:center; padding:10px; }
+        .affiliate-card { padding:10px; gap:10px; }
+        .affiliate-card img { width:56px; height:56px; }
+        .monetize-row img { height:32px; }
+        .affiliate-disclaimer { padding: 0 12px; text-align:center; }
+    }
+    /* consent and privacy UI removed per user request */
     </style>
 </head>
 <body>
@@ -159,10 +171,10 @@
                 <div style="display:flex; gap:8px; align-items:center;">
                     <button type="submit" id="loginBtn" class="login-btn">Login</button>
                 </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                    <button type="button" class="register-toggle" id="registerToggle">Don't have an account? Register</button>
-                    <div style="font-size:0.9rem;"><a href="javascript:void(0)" id="forgotPassword">Forgot password?</a></div>
-                </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; gap:8px;">
+                        <button type="button" class="register-toggle" id="registerToggle" style="background:none;border:none;color:#007bff;padding:6px 8px;cursor:pointer;text-decoration:underline;font-size:0.95rem;">Don't have an account? Register</button>
+                        <div style="font-size:0.9rem;"><a href="javascript:void(0)" id="forgotPassword">Forgot password?</a></div>
+                    </div>
                 <div id="loginStatus" style="margin-top:10px; font-size:0.9rem; color:#6c757d;"></div>
 
             </form>
@@ -238,12 +250,11 @@
                 <div class="notes-section"><h3>📝 Notes</h3><textarea class="notes-textarea" id="notesArea" placeholder="Add any notes about Zachary's weaning journey..."></textarea></div>
                 <!-- Monetization: donation + ad placeholder -->
                 <div class="monetize-row" id="monetizeRow">
-                    <a href="https://buymeacoffee.com/samholdernq" target="_blank" rel="noopener noreferrer">
-                        <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy Me A Coffee" style="height:36px;">
+                    <a class="buyme-link" href="https://buymeacoffee.com/samholdernq" target="_blank" rel="noopener noreferrer">
+                        <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy Me A Coffee" style="height:36px; display:block;">
+                        <span class="buyme-label">Buy me a coffee</span>
                     </a>
-                    <div id="adPlaceholder" class="ad-placeholder">
-                        <small>Ad space (replace with AdSense ad unit after account/site approval)</small>
-                    </div>
+                    <!-- AdSense placeholder removed -->
 
                     <!-- Affiliate card: Amazon Associate link + required disclosure -->
                     <div class="affiliate-card" style="display:flex; align-items:center; gap:12px; margin-left:18px;">
@@ -285,28 +296,15 @@
         </div>
     </div>
     <div class="auto-save-indicator" id="autoSaveIndicator">✅ Synced to cloud!</div>
+    <footer style="text-align:center; margin-top:18px; font-size:0.9rem; color:#6c757d;">
+        <span>© Zachary's Weaning Tracker</span>
+    </footer>
     <div class="info-modal" id="infoModal" style="display:none; position:fixed; z-index:4000; left:50%; top:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:600px; width:90%;">
         <button type="button" class="close-info" id="closeInfoBtn" style="position:absolute; right:10px; top:10px;">✖</button>
         <h4 id="infoModalTitle">Info</h4>
         <div id="infoModalBody"></div>
     </div>
-    <!-- Consent banner for ads -->
-    <div class="consent-banner" id="consentBanner">
-        <div class="consent-text">We use ads to support development. Allow personalized ads on this device?</div>
-        <div class="consent-actions">
-            <button type="button" class="consent-btn secondary" id="consentDecline">Not now</button>
-            <button type="button" class="consent-btn" id="consentAccept">Yes, enable ads</button>
-        </div>
-    </div>
-
-    <!-- Privacy modal (explain ad behaviour) -->
-    <div class="privacy-modal" id="privacyModal">
-        <h3>Privacy & Ads</h3>
-        <p>We may load third-party advertising scripts (e.g., Google AdSense) which may use cookies to personalise ads. You can choose to enable ads or keep the app ad-free. For details, see our privacy policy (you should host a privacy policy on your site when using ad networks).</p>
-        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-            <button type="button" class="consent-btn secondary" id="privacyClose">Close</button>
-        </div>
-    </div>
+    <!-- privacy/cookies UI removed per user request -->
     
     <!-- Firebase SDK -->
     <script type="module">
@@ -1460,72 +1458,7 @@
             }
         }
 
-        // Consent and AdSense lazy-loading handlers
-        (function setupMonetization() {
-            const consentKey = 'zc_ads_consent_v1';
-            const banner = document.getElementById('consentBanner');
-            const acceptBtn = document.getElementById('consentAccept');
-            const declineBtn = document.getElementById('consentDecline');
-            const privacyModal = document.getElementById('privacyModal');
-            const privacyClose = document.getElementById('privacyClose');
-
-            function hasConsent() { return localStorage.getItem(consentKey) === 'granted'; }
-
-            function showBannerIfNeeded() {
-                // Only show banner if not decided and container exists
-                if (!hasConsent() && banner) banner.style.display = 'flex';
-                if (hasConsent()) injectAdSense();
-            }
-
-            function injectAdSense() {
-                // id placeholders to replace after you register with AdSense
-                const ADSENSE_CLIENT = 'ca-pub-2925048158561041';
-                const ADSENSE_SLOT = 'REPLACE_WITH_AD_SLOT';
-
-                // Avoid injecting multiple times
-                if (window.__adsense_loaded) return;
-                window.__adsense_loaded = true;
-
-                // Load the global adsbygoogle script with your client id (replace placeholder)
-                const s = document.createElement('script');
-                s.async = true;
-                s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
-                s.crossOrigin = 'anonymous';
-                document.head.appendChild(s);
-
-                // Replace the adPlaceholder with an ins.adsbygoogle node (responsive)
-                const placeholder = document.getElementById('adPlaceholder');
-                if (placeholder) {
-                    placeholder.innerHTML = `
-                        <ins class="adsbygoogle"
-                             style="display:block"
-                             data-ad-client="${ADSENSE_CLIENT}"
-                             data-ad-slot="${ADSENSE_SLOT}"
-                             data-ad-format="auto"
-                             data-full-width-responsive="true"
-                             data-adtest="on"></ins>`;
-                    try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) { console.warn('adsbygoogle push failed', e); }
-                }
-            }
-
-            if (acceptBtn) acceptBtn.addEventListener('click', function() {
-                localStorage.setItem(consentKey, 'granted');
-                if (banner) banner.style.display = 'none';
-                injectAdSense();
-                showAutoSave('✅ Ads enabled (you can disable in settings)');
-            });
-
-            if (declineBtn) declineBtn.addEventListener('click', function() {
-                localStorage.setItem(consentKey, 'denied');
-                if (banner) banner.style.display = 'none';
-                showAutoSave('Ads are disabled');
-            });
-
-            if (privacyClose) privacyClose.addEventListener('click', function() { privacyModal.style.display = 'none'; });
-
-            // Show banner after a short delay so it doesn't block the initial UX
-            setTimeout(showBannerIfNeeded, 1000);
-        })();
+        // Monetization and privacy/cookies handlers removed per user request.
 
     </script>
 </body>
