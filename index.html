@@ -151,6 +151,14 @@
         .monetize-row img { height:32px; }
         .affiliate-disclaimer { padding: 0 12px; text-align:center; }
     }
+    /* Ella's Kitchen pouches UI */
+    .ella-pouches-section { margin: 18px 0 6px 0; }
+    .ella-pouches-section h4 { margin-bottom: 8px; color:#495057; }
+    .pouches-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom: 12px; }
+    .pouch-item { background: linear-gradient(180deg,#fff 0%, #f8f9fa 100%); border: 1px solid #e9ecef; padding:10px; border-radius:10px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .pouch-name { font-weight:700; text-align:center; font-size:0.95rem; color:#333; }
+    .pouch-add-btn { background: linear-gradient(135deg,#667eea 0%, #764ba2 100%); color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .pouch-add-btn:disabled { background:#6c757d; opacity:0.6; cursor:not-allowed; }
     /* consent and privacy UI removed per user request */
     </style>
 </head>
@@ -290,6 +298,14 @@
                     <div class="meal-input-section">
                         <input type="text" id="mealName" class="meal-input" placeholder="Enter custom meal name (e.g., 'Homemade applesauce')" maxlength="50">
                         <button type="button" id="addMealBtn" class="add-meal-btn" disabled>Add Meal</button>
+                    </div>
+                    <!-- Ella's Kitchen pouches quick-add -->
+                    <div class="ella-pouches-section">
+                        <h4>Ella's Kitchen pouches (quick add)</h4>
+                        <div class="pouches-grid" id="pouchesGrid">
+                            <!-- JS will populate pouch items here -->
+                        </div>
+                        <div style="font-size:0.85rem; color:#6c757d;">Select a stage above, then tap a pouch to add it to that stage.</div>
                     </div>
                 </div>
             </div>
@@ -434,12 +450,14 @@
             }
         };
 
-        // Data storage
-        let weaningData = {};
-        let allergyData = {};
-        let notes = '';
-        let selectedStage = null;
-        let achievements = {};
+    // Data storage
+    let weaningData = {};
+    let allergyData = {};
+    let notes = '';
+    let selectedStage = null;
+    let achievements = {};
+    // Keep track of which stages are open so we can preserve state when parts of the UI re-render
+    let openStages = new Set();
 
         // Achievement definitions
         const achievementList = {
@@ -1060,6 +1078,69 @@
 
             mealInput.addEventListener('input', updateAddButton);
             addBtn.addEventListener('click', addCustomMeal);
+
+            // Render Ella's pouches and wire up quick-add buttons
+            renderEllaPouches();
+        }
+
+        // Ella's Kitchen pouches list
+        const ellaPouches = [
+            'Bangers and Mash', 'Beef Stew', 'Chicken and Rice Casserole', 'Vegetable & Lentil Bake', 'Spag Bol', 'Veggie Feast', 'Chicken Veg', 'Fish Pie', 'Lamb Roast Dinner', 'Cheesy Pie', 'Rice Pudding', 'Lamb Couscous'
+        ];
+
+        function renderEllaPouches() {
+            const grid = document.getElementById('pouchesGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            ellaPouches.forEach(pouch => {
+                const item = document.createElement('div');
+                item.className = 'pouch-item';
+                item.innerHTML = `
+                    <div class="pouch-name">${pouch}</div>
+                    <button type="button" class="pouch-add-btn" data-pouch="${pouch}">Add</button>
+                `;
+                grid.appendChild(item);
+            });
+
+            // Attach click handler (event delegation)
+            grid.addEventListener('click', function(e) {
+                const btn = e.target.closest('.pouch-add-btn');
+                if (!btn) return;
+                const pouch = btn.dataset.pouch;
+                if (!selectedStage) {
+                    alert('Please select a stage above to add this pouch to.');
+                    return;
+                }
+                addPouchToStage(selectedStage, pouch);
+            });
+        }
+
+        async function addPouchToStage(stageName, pouchName) {
+            // Ensure stage exists
+            if (!weaningStages[stageName]) {
+                weaningStages[stageName] = [];
+            }
+
+            // Avoid duplicates
+            if (weaningStages[stageName].includes(pouchName)) {
+                showAutoSave(`\"${pouchName}\" already in ${stageName}`);
+                return;
+            }
+
+            weaningStages[stageName].push(pouchName);
+
+            // Persist customStages (only push the modified stage to Firebase to keep sizes small)
+            const customStages = {};
+            customStages[stageName] = weaningStages[stageName];
+            await saveToFirebase('customStages', { ...(currentUserData.customStages||{}), ...customStages });
+
+            showAutoSave(`Added \"${pouchName}\" to ${stageName}`);
+
+            // If currently viewing stages, re-render
+            if (document.getElementById('stages').classList.contains('active')) {
+                renderStages();
+            }
         }
 
         function updateAddButton() {
@@ -1132,6 +1213,11 @@
                     </div>
                 `;
 
+                // If this stage was previously open, restore the open class
+                if (openStages.has(stageName)) {
+                    stageDiv.classList.add('open');
+                }
+
                 container.appendChild(stageDiv);
                 // Attach click listeners after appending
                 const header = stageDiv.querySelector('.stage-header');
@@ -1154,11 +1240,20 @@
 
         // Toggle stage visibility
         window.toggleStage = function(stageName) {
-            const stageContent = document.getElementById(`stage-${stageName.replace(/[^a-zA-Z0-9]/g, '')}`);
-            if (!stageContent) return;
-            const computed = window.getComputedStyle(stageContent).display;
-            const isHidden = computed === 'none';
-            stageContent.style.display = isHidden ? 'grid' : 'none';
+            // Find the parent stage element by dataset
+            const safeId = stageName.replace(/[^a-zA-Z0-9]/g, '');
+            const stageEl = document.querySelector(`.stage [id="stage-${safeId}"]`);
+            if (!stageEl) return;
+
+            const stageContainer = stageEl.closest('.stage');
+            if (!stageContainer) return;
+
+            const isOpen = stageContainer.classList.toggle('open');
+            if (isOpen) {
+                openStages.add(stageName);
+            } else {
+                openStages.delete(stageName);
+            }
         }
 
         // Create food item HTML
@@ -1464,5 +1559,3 @@
 </body>
 </html>
 
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2925048158561041"
-     crossorigin="anonymous"></script>
