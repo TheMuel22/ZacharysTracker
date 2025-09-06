@@ -195,8 +195,9 @@
 
                 <!-- New overview for the login screen -->
                 <div class="login-overview" aria-hidden="false">
+                    <!-- About button removed as requested -->
                     <div style="margin-bottom:10px;">
-                        <button type="button" class="about-btn" id="aboutBtn">About the app</button>
+                        <!-- intentionally left blank after removing about button -->
                     </div>
 
                     <div id="overviewContent" style="display:none;">
@@ -587,6 +588,9 @@
 
             // React to auth state changes
             onAuthStateChanged(getAuth(app), (user) => {
+                // If the app is opened in demo preview mode, do not override the UI
+                // This keeps the preview visible even if auth state updates fire.
+                if (window._DEMO_PREVIEW) return;
                 if (user) {
                     currentUser = user.uid;
                     currentUserData = {};
@@ -1730,13 +1734,17 @@
                             aboutBtn.textContent = 'Hide overview';
                         } else {
                             overview.style.display = 'none';
-                            aboutBtn.textContent = 'About the app';
+                            // only set text if the button still exists
+                            if (aboutBtn) aboutBtn.textContent = 'About the app';
                         }
                     });
                 }
+
                 const tryBtn = document.getElementById('tryDemoBtn');
                 if (!tryBtn) return;
-                tryBtn.addEventListener('click', (e) => {
+
+                // Extract demo opening logic so it can be called from the link (?demo=1)
+                function openDemo() {
                     try {
                         const loginScreen = document.getElementById('loginScreen');
                         const mainApp = document.getElementById('mainApp');
@@ -1747,6 +1755,7 @@
                             try { if (typeof updateSummary === 'function') updateSummary(); } catch(e) {}
                             try { if (typeof setupAddMealTab === 'function') setupAddMealTab(); } catch(e) {}
                         }
+
                         // Create a back button so users can return to the login screen
                         if (!document.getElementById('demoBackBtn')) {
                             const back = document.createElement('button');
@@ -1754,13 +1763,21 @@
                             back.className = 'demo-back-btn';
                             back.textContent = 'Back to login';
                             back.addEventListener('click', () => {
-                                if (mainApp) mainApp.style.display = 'none';
-                                if (loginScreen) loginScreen.style.display = 'flex';
-                                // remove the back button
-                                back.remove();
-                                // hide overview content again
-                                if (overview) { overview.style.display = 'none'; aboutBtn && (aboutBtn.textContent = 'About the app'); }
-                                window._DEMO_PREVIEW = false;
+                                try {
+                                    // Hide the demo UI locally
+                                    if (mainApp) mainApp.style.display = 'none';
+                                    if (loginScreen) loginScreen.style.display = 'flex';
+                                    // remove the back button
+                                    back.remove();
+                                            // hide overview content again
+                                            if (overview) { overview.style.display = 'none'; if (aboutBtn) aboutBtn.textContent = 'About the app'; }
+                                    window._DEMO_PREVIEW = false;
+                                    // Navigate the user back to the public landing page so they land where they started
+                                    // Navigate back to the login page (login.html)
+                                    window.location.href = 'login.html';
+                                } catch (e) {
+                                    console.error('Failed to navigate back to landing', e);
+                                }
                             });
 
                             // put back button near the top-left of the app header area
@@ -1769,7 +1786,20 @@
                         }
                         window._DEMO_PREVIEW = true;
                     } catch (err) { console.error('Demo preview error', err); }
-                });
+                }
+
+                tryBtn.addEventListener('click', (e) => { e && e.preventDefault(); openDemo(); });
+
+                // If the URL has ?demo=1, auto-open the demo when the page loads
+                try {
+                    const params = new URLSearchParams(window.location.search || '');
+                    if (params.get('demo') === '1') {
+                        // Delay slightly to ensure other inits complete
+                        setTimeout(openDemo, 100);
+                    }
+                } catch (err) {
+                    // URLSearchParams may fail in some older contexts; ignore
+                }
             }
 
             if (document.readyState === 'loading') {
@@ -1781,4 +1811,3 @@
     </script>
 </body>
 </html>
-
