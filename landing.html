@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zachary's Weaning Tracker — Welcome</title>
+  <meta name="description" content="Welcome to Zachary's Weaning Tracker. Click Login to go to the tracker page." />
+  <style>
+    :root{--bg:#f6f8fb;--card:#fff;--accent:#667eea;--muted:#6c757d}
+    html,body{height:100%;margin:0;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;background:linear-gradient(180deg,#f0f4ff,white)}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:920px;background:var(--card);border-radius:16px;box-shadow:0 12px 40px rgba(34,41,47,0.08);overflow:hidden;display:grid;grid-template-columns:1fr 360px}
+    @media (max-width:820px){
+      /* switch to column layout on small screens and show login panel first */
+      .card{display:flex;flex-direction:column;}
+      .right{order:1}
+      .left{order:2}
+    }
+    .left{padding:36px 44px}
+  .logo{display:flex;align-items:center;justify-content:center;gap:12px}
+  .logo img{height:140px;width:auto;border-radius:12px}
+  .weaning-info{margin-top:18px;background:#fff;border:1px solid #eef3fb;padding:18px;border-radius:12px}
+  .weaning-info h3{margin:0 0 14px 0;color:#22303f;text-align:center}
+  .weaning-info p{color:#22303f;margin:6px 0}
+  .weaning-info .types{margin:8px 0;padding-left:18px}
+  .weaning-info .types li{margin:6px 0}
+  .weaning-info .signs{margin:8px 0;padding-left:18px}
+  .baby-images{display:flex;gap:8px;margin-top:12px;justify-content:center}
+  .baby-images img{flex:1 1 0;border-radius:10px;object-fit:cover;height:220px;border:1px solid #e9eef8}
+  .single-baby{display:block;text-align:center;margin:12px 0}
+  .single-baby img{height:220px;object-fit:cover;border-radius:10px;border:1px solid #e9eef8}
+  @media (max-width:720px){.baby-images{flex-direction:column}.baby-images img{height:320px}.single-baby img{height:320px}}
+  h1{font-size:1.5rem;margin:12px 0;color:#22303f;font-weight:700}
+  p.lead{color:#22303f;line-height:1.45;font-size:0.98rem}
+  .weaning-info h3{color:#22303f;font-size:1.05rem;margin:14px 0;text-align:center}
+  .weaning-info p, .weaning-info .types li, .weaning-info .signs li{color:#22303f;font-size:0.98rem;line-height:1.45}
+    .features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+    @media (max-width:520px){.features{grid-template-columns:1fr}}
+  .feature{background:#f8fafc;padding:12px;border-radius:10px;border:1px solid #eef3fb;color:#22303f;font-size:0.95rem}
+    .right{background:linear-gradient(180deg,var(--accent),#764ba2);color:white;padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+    .right .btn{background:white;color:var(--accent);padding:12px 18px;border-radius:12px;border:none;font-weight:700;cursor:pointer;text-decoration:none}
+    .right .btn.secondary{background:transparent;border:2px solid rgba(255,255,255,0.18);color:white}
+    .small{font-size:0.86rem;color:rgba(255,255,255,0.9);opacity:0.95}
+  footer{margin-top:18px;text-align:center;color:#22303f;font-size:0.9rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main">
+      <div class="left">
+        <div class="logo">
+          <img src="this.png" alt="Weaning Tracker logo" />
+        </div>
+
+  <h1>Track tastes, attempts and progress (with helpful tips)</h1>
+
+  <div class="weaning-info" aria-label="Weaning overview">
+    <h3>What is weaning?</h3>
+    <p>The gradual introduction of solid foods to a baby’s diet while reducing reliance on breast milk or formula.</p>
+
+  <div class="single-baby"><img src="baby3.jpg" alt="baby3" /></div>
+  <h3 style="margin-top:12px">Types of weaning?</h3>
+    <p><strong>Traditional Weaning:</strong> Parent-led spoon-feeding purees and mashed foods.</p>
+  <p><strong>Baby-Led Weaning:</strong> Baby self-feeds with soft finger foods, skips purees.</p>
+    <p><strong>Combination Feeding:</strong> A mix of both methods, which many families use in practice.</p>
+
+  <div class="single-baby"><img src="baby1.jpg" alt="baby1" /></div>
+  <h3 style="margin-top:8px">When to Start Weaning?</h3>
+    <p>Most health authorities recommend starting around 6 months, however each baby is different and there are key milestones to watch out for.</p>
+    <ul class="types">
+      <li><strong>WHO:</strong> Exclusive breastfeeding until 6 months, then complementary foods.</li>
+      <li><strong>NHS (UK):</strong> Around 6 months, when babies show readiness signs.</li>
+      <li><strong>AAP (US):</strong> Around 6 months, though some babies may be ready between 4–6 months.</li>
+    </ul>
+
+  <div class="single-baby"><img src="baby2.jpg" alt="baby2" /></div>
+  <h3 style="margin-top:8px">Signs your Baby is Ready</h3>
+    <ul class="signs">
+  <li>Can sit upright <u>with</u> support.</li>
+      <li>Has good head and neck control.</li>
+      <li>Shows interest in food (grabbing, watching adults eat).</li>
+      <li>Can move food from the front of the mouth to the back to swallow.</li>
+      <li>Loss of the tongue-thrust reflex (no longer automatically pushes food out).</li>
+    </ul>
+    
+    <!-- gallery removed; images now placed inline above each section -->
+  </div>
+
+  <h3 style="margin-top:18px; text-align:left">Features</h3>
+  <div class="features" aria-hidden="false">
+          <div class="feature"><strong>Quick logging</strong><div style="margin-top:6px;color:#22303f">Mark tried, adjust attempts and rate in seconds.</div></div>
+          <div class="feature"><strong>Stage guidance</strong><div style="margin-top:6px;color:#22303f">Foods & tips tailored to each weaning stage.</div></div>
+          <div class="feature"><strong>Allergy tracking</strong><div style="margin-top:6px;color:#22303f">Log reactions and view history per food.</div></div>
+          <div class="feature"><strong>Cloud sync</strong><div style="margin-top:6px;color:#22303f">Optional sync and export for backups.</div></div>
+        </div>
+
+        <footer>
+          <div>© Zachary's Weaning Tracker</div>
+        </footer>
+      </div>
+
+      <div class="right" aria-label="Login panel">
+        <div style="text-align:center">
+          <div style="font-size:1.2rem;font-weight:700">Welcome back</div>
+          <div class="small" style="margin-top:6px;">Sign in to access your saved data</div>
+        </div>
+
+  <a class="btn" href="weaning-fixed.html">Login to tracker</a>
+  <a class="btn secondary" href="weaning-fixed.html?demo=1">Preview without login</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
