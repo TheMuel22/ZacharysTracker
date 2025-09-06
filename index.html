@@ -29,7 +29,11 @@
   .baby-images img{flex:1 1 0;border-radius:10px;object-fit:cover;height:220px;border:1px solid #e9eef8}
   .single-baby{display:block;text-align:center;margin:12px 0}
   .single-baby img{height:220px;object-fit:cover;border-radius:10px;border:1px solid #e9eef8}
-  @media (max-width:720px){.baby-images{flex-direction:column}.baby-images img{height:320px}.single-baby img{height:320px}}
+  @media (max-width:720px){
+    .baby-images{flex-direction:column}
+    /* Make baby images scale to the device width on small screens */
+    .baby-images img, .single-baby img{width:100%;height:auto;max-width:100%;object-fit:cover}
+  }
   h1{font-size:1.5rem;margin:12px 0;color:#22303f;font-weight:700}
   p.lead{color:#22303f;line-height:1.45;font-size:0.98rem}
   .weaning-info h3{color:#22303f;font-size:1.05rem;margin:14px 0;text-align:center}
